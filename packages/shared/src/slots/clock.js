@@ -26,3 +26,20 @@ export function displayClock(minutes) {
 export function displaySlotTimes({ startMin, endMin }) {
   return `${displayClock(startMin)} – ${displayClock(endMin)}`;
 }
+
+/** Day buckets for the attendance roster filter — coarser than slots, so admins don't
+ * have to know which named slot "now" falls into. */
+export const DAY_PERIODS = [
+  { value: "morning", label: "Morning", fromMin: 0, toMin: 12 * 60 },
+  { value: "afternoon", label: "Afternoon", fromMin: 12 * 60, toMin: 16 * 60 },
+  { value: "evening", label: "Evening", fromMin: 16 * 60, toMin: 19 * 60 },
+  { value: "night", label: "Night", fromMin: 19 * 60, toMin: MINUTES_PER_DAY },
+];
+
+/** Which bucket a clock-minute (slot start, or "now") falls into. */
+export function periodOfMinutes(minutes) {
+  const value = ((Number(minutes) % MINUTES_PER_DAY) + MINUTES_PER_DAY) % MINUTES_PER_DAY;
+  return (
+    DAY_PERIODS.find((p) => value >= p.fromMin && value < p.toMin)?.value ?? DAY_PERIODS[0].value
+  );
+}

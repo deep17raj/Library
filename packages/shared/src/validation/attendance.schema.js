@@ -14,6 +14,12 @@ export const manualAttendanceSchema = z.object({
   subscriptionId: idField.optional(),
 });
 
+/** Staff marks a booking absent (wins over an earlier check-in on the roster). */
+export const markAbsentSchema = z.object({
+  memberId: idField,
+  subscriptionId: idField,
+});
+
 /** Kiosk on the desk: a student types their phone number and the day's code. */
 export const kioskCheckinSchema = z.object({
   phone: phoneField,

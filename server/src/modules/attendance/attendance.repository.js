@@ -108,3 +108,33 @@ export async function countPresentOnDay(db, tenantId, localDate) {
   );
   return Number(row?.present ?? 0);
 }
+
+/** Bookings explicitly marked absent on a day (the roster's override list). */
+export async function listAbsentSubscriptionIds(db, tenantId, localDate) {
+  const rows = await queryAll(
+    db,
+    "SELECT subscription_id FROM attendance_absences WHERE tenant_id = ? AND local_date = ?",
+    [tenantId, localDate],
+  );
+  return new Set(rows.map((r) => r.subscription_id));
+}
+
+/** Staff marks a booking absent for a day — wins over any check-in without deleting it. */
+export async function markAbsent(db, tenantId, a) {
+  await execute(
+    db,
+    `INSERT INTO attendance_absences (id, tenant_id, subscription_id, local_date, marked_by, marked_at)
+     VALUES (?, ?, ?, ?, ?, UTC_TIMESTAMP())
+     ON DUPLICATE KEY UPDATE marked_by = VALUES(marked_by), marked_at = UTC_TIMESTAMP()`,
+    [a.id, tenantId, a.subscriptionId, a.localDate, a.markedBy],
+  );
+}
+
+/** Clear an absent override (e.g. staff marks the booking present after all). */
+export async function clearAbsence(db, tenantId, subscriptionId, localDate) {
+  await execute(
+    db,
+    "DELETE FROM attendance_absences WHERE tenant_id = ? AND subscription_id = ? AND local_date = ?",
+    [tenantId, subscriptionId, localDate],
+  );
+}

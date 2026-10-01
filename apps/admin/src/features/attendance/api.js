@@ -22,6 +22,18 @@ export function useAttendance({ date, slotId }) {
   });
 }
 
+/** Every booked member for a day (optionally one slot/batch), with present/absent/unmarked. */
+export function useAttendanceRoster({ date, slotId }) {
+  const params = new URLSearchParams();
+  if (date) params.set("date", date);
+  if (slotId) params.set("slotId", slotId);
+  return useQuery({
+    queryKey: ["library", "attendance-roster", date ?? "", slotId ?? ""],
+    queryFn: () => api.get(`/admin/attendance/roster?${params}`),
+    placeholderData: keepPreviousData,
+  });
+}
+
 /** A member's attendance for a month (member page). */
 export function useMemberAttendance(memberId, month) {
   return useQuery({
@@ -40,6 +52,7 @@ function useAttendanceMutation(mutationFn) {
       Promise.all(
         [
           ["library", "attendance"],
+          ["library", "attendance-roster"],
           ["library", "checkin-desk"],
           ["library", "member-attendance"],
           ["library", "dashboard"],
@@ -56,4 +69,9 @@ export function useKioskCheckin(slug) {
 /** Staff marks a member present (overrides the slot/dues gates). */
 export function useMarkAttendance() {
   return useAttendanceMutation((body) => api.post("/admin/attendance", body));
+}
+
+/** Staff marks a booking absent — wins over an earlier check-in without deleting it. */
+export function useMarkAbsent() {
+  return useAttendanceMutation((body) => api.post("/admin/attendance/absent", body));
 }

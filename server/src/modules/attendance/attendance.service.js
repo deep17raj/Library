@@ -1,13 +1,17 @@
+import crypto from "node:crypto";
 import { displayDateTime, localDateOf, monthRange } from "@app/shared/time";
 import { ERROR_CODES } from "@app/shared/constants";
 import { AppError, notFound } from "../../http/AppError.js";
 import { bindDeps } from "../../lib/bindDeps.js";
 import { toCsv } from "../../lib/csv.js";
 import { dailyCode, verifyDailyCode } from "../../lib/dailyCode.js";
-import { recordAudit } from "../audit/audit.repository.js";
+import { byUser, recordAudit } from "../audit/audit.repository.js";
 import { findLibraryById } from "../platform/platform.repository.js";
 import { findMember, findMemberByPhone } from "../members/members.repository.js";
-import { listActiveSlotsOfMember } from "../subscriptions/subscriptions.repository.js";
+import {
+  listActiveBookings,
+  listActiveSlotsOfMember,
+} from "../subscriptions/subscriptions.repository.js";
 import { attendanceSettings } from "../settings/librarySettings.js";
 import * as attendanceRepository from "./attendance.repository.js";
 import { runCheckin } from "./checkin.js";
@@ -16,7 +20,8 @@ import { runCheckin } from "./checkin.js";
  * @typedef {object} AttendanceDeps
  * @property {import("mysql2/promise").Pool} db
  * @property {typeof attendanceRepository} repo
- * @property {{ listActiveSlotsOfMember: typeof listActiveSlotsOfMember }} subscriptions
+ * @property {{ listActiveSlotsOfMember: typeof listActiveSlotsOfMember,
+ *   listActiveBookings: typeof listActiveBookings }} subscriptions
  * @property {{ findMember: typeof findMember, findMemberByPhone: typeof findMemberByPhone }} members
  * @property {{ attendance: typeof attendanceSettings }} settings
  * @property {{ findLibraryById: typeof findLibraryById }} libraries
@@ -34,7 +39,7 @@ import { runCheckin } from "./checkin.js";
 export function createAttendanceService({
   db,
   repo = attendanceRepository,
-  subscriptions = { listActiveSlotsOfMember },
+  subscriptions = { listActiveSlotsOfMember, listActiveBookings },
   members = { findMember, findMemberByPhone },
   settings = { attendance: attendanceSettings },
   libraries = { findLibraryById },
@@ -50,7 +55,9 @@ export function createAttendanceService({
       checkInByPhone,
       checkInByCode,
       markManually,
+      markAbsent,
       listForDay,
+      listRoster,
       listForMember,
       exportForDay,
     },
@@ -104,7 +111,7 @@ async function markManually(deps, ctx, { memberId, subscriptionId }) {
   if (!member) throw notFound("Member not found");
   const rules = await deps.settings.attendance(deps.db, ctx.tenantId);
   const today = localDateOf(deps.now(), rules.timezone);
-  return runCheckin(deps, ctx, {
+  const result = await runCheckin(deps, ctx, {
     member,
     method: "staff",
     rules,
@@ -113,6 +120,50 @@ async function markManually(deps, ctx, { memberId, subscriptionId }) {
     override: true,
     forceSubscriptionId: subscriptionId,
   });
+  // A present mark always wins over an earlier absent mark for the same booking/day.
+  await deps.repo.clearAbsence(deps.db, ctx.tenantId, result.attendance.subscriptionId, today);
+  return result;
+}
+
+/** Staff marks a booking absent, even if the student already checked in (QR etc.) — the
+ * check-in is kept, the override just wins on the roster. @param {AttendanceDeps} deps */
+async function markAbsent(deps, ctx, { memberId, subscriptionId }) {
+  const member = await deps.members.findMember(deps.db, ctx.tenantId, memberId);
+  if (!member) throw notFound("Member not found");
+  const rules = await deps.settings.attendance(deps.db, ctx.tenantId);
+  const today = localDateOf(deps.now(), rules.timezone);
+  const id = crypto.randomUUID();
+  await deps.repo.markAbsent(deps.db, ctx.tenantId, {
+    id,
+    subscriptionId,
+    localDate: today,
+    markedBy: ctx.actor?.id ?? null,
+  });
+  await deps.audit.recordAudit(
+    deps.db,
+    byUser(ctx.actor, "attendance.mark_absent", "attendance", id, { memberId, subscriptionId }),
+  );
+  return { action: "marked_absent", memberId, subscriptionId, date: today };
+}
+
+/** Everyone with an active booking today, with their attendance status — the roster card
+ * list. A member already checked in by QR can still be flipped to absent (kept, not
+ * deleted); `unmarked` means neither happened yet. @param {AttendanceDeps} deps */
+async function listRoster(deps, ctx, { date, slotId }) {
+  const rules = await deps.settings.attendance(deps.db, ctx.tenantId);
+  const day = date || localDateOf(deps.now(), rules.timezone);
+  const [bookings, presentRows, absentIds] = await Promise.all([
+    deps.subscriptions.listActiveBookings(deps.db, ctx.tenantId, slotId || null),
+    deps.repo.listForDay(deps.db, ctx.tenantId, day, slotId || null),
+    deps.repo.listAbsentSubscriptionIds(deps.db, ctx.tenantId, day),
+  ]);
+  const presentBySub = new Map(presentRows.map((r) => [r.subscriptionId, r]));
+  const members = bookings.map((b) => {
+    const present = presentBySub.get(b.subscriptionId);
+    const status = absentIds.has(b.subscriptionId) ? "absent" : present ? "present" : "unmarked";
+    return { ...b, status, checkInAt: present?.checkInAt ?? null, checkOutAt: present?.checkOutAt ?? null };
+  });
+  return { date: day, members };
 }
 
 /** @param {AttendanceDeps} deps */

@@ -93,6 +93,26 @@ export async function listActiveSubscriptionsOfSlot(db, tenantId, slotId) {
   );
 }
 
+/** Everyone with an active booking, optionally one slot — the attendance roster. */
+export async function listActiveBookings(db, tenantId, slotId = null) {
+  const where = slotId ? "AND s.slot_id = ?" : "";
+  const params = slotId ? [tenantId, slotId] : [tenantId];
+  return queryAll(
+    db,
+    `SELECT s.id AS subscriptionId, s.member_id AS memberId, m.name AS memberName,
+            m.member_code AS memberCode, s.slot_id AS slotId, sl.name AS slotName,
+            sl.start_min AS startMin, sl.end_min AS endMin, st.label AS seatLabel
+       FROM subscriptions s
+       JOIN members m ON m.id = s.member_id
+       JOIN slots sl ON sl.id = s.slot_id
+       LEFT JOIN seat_allocations al ON al.active_subscription_id = s.id
+       LEFT JOIN seats st ON st.id = al.seat_id
+      WHERE s.tenant_id = ? AND s.status = 'active' ${where}
+      ORDER BY sl.start_min, m.name`,
+    params,
+  );
+}
+
 export async function countActiveSubscriptionsInHall(db, tenantId, hallId) {
   const row = await queryOne(
     db,

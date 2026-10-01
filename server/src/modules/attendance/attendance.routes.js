@@ -5,6 +5,7 @@ import {
   attendanceQuerySchema,
   kioskCheckinSchema,
   manualAttendanceSchema,
+  markAbsentSchema,
 } from "@app/shared/validation";
 import { asyncHandler } from "../../http/asyncHandler.js";
 import { AppError } from "../../http/AppError.js";
@@ -26,22 +27,7 @@ export function createAttendanceRouter({ attendanceService: service }) {
     "/checkin/desk",
     asyncHandler(async (req, res) => res.json(await service.getDesk(req.ctx))),
   );
-  router.get(
-    "/attendance",
-    canMark,
-    validateQuery(attendanceQuerySchema),
-    asyncHandler(async (req, res) =>
-      res.json(await service.listForDay(req.ctx, req.validatedQuery)),
-    ),
-  );
-  router.post(
-    "/attendance",
-    canMark,
-    validateBody(manualAttendanceSchema),
-    asyncHandler(async (req, res) =>
-      res.status(201).json(await service.markManually(req.ctx, req.body)),
-    ),
-  );
+  registerMarkingRoutes(router, service, canMark);
   router.get(
     "/members/:memberId/attendance",
     validateQuery(attendanceMonthQuerySchema),
@@ -60,6 +46,40 @@ export function createAttendanceRouter({ attendanceService: service }) {
     ),
   );
   return router;
+}
+
+/** The day list, the roster (everyone booked, present/absent/unmarked) and marking. */
+function registerMarkingRoutes(router, service, canMark) {
+  router.get(
+    "/attendance",
+    canMark,
+    validateQuery(attendanceQuerySchema),
+    asyncHandler(async (req, res) =>
+      res.json(await service.listForDay(req.ctx, req.validatedQuery)),
+    ),
+  );
+  router.get(
+    "/attendance/roster",
+    canMark,
+    validateQuery(attendanceQuerySchema),
+    asyncHandler(async (req, res) => res.json(await service.listRoster(req.ctx, req.validatedQuery))),
+  );
+  router.post(
+    "/attendance",
+    canMark,
+    validateBody(manualAttendanceSchema),
+    asyncHandler(async (req, res) =>
+      res.status(201).json(await service.markManually(req.ctx, req.body)),
+    ),
+  );
+  router.post(
+    "/attendance/absent",
+    canMark,
+    validateBody(markAbsentSchema),
+    asyncHandler(async (req, res) =>
+      res.status(201).json(await service.markAbsent(req.ctx, req.body)),
+    ),
+  );
 }
 
 /**

@@ -24,19 +24,34 @@ Check-in and the attendance register (ARCHITECTURE.md §9).
 It is never stored and rotates each library-local day, so a photographed QR stops working
 the next day. The slot and dues checks do the real gatekeeping.
 
+## The roster and marking absent
+
+`GET /attendance/roster` lists everyone with an active booking for a day (optionally one
+slot), each tagged `present` / `absent` / `unmarked`. This is what the Attendance screen's
+cards are built from, filterable by batch (slot) and by a coarse time-of-day bucket
+(`packages/shared/src/slots/clock.js` → `DAY_PERIODS` / `periodOfMinutes`) that defaults
+to whatever part of the day it is right now.
+
+"Absent" is a separate override table (`attendance_absences`, one row per booking per
+day), not a field on `attendance` — so marking someone absent after they've already
+checked in (e.g. by QR) never deletes that check-in; the override just wins on the
+roster. Marking the same booking present again (`markManually`) clears the override.
+
 ## Routes
 
 - Admin (`/api/admin`): `GET /checkin/desk` (code + QR target + present count, any staff),
-  `GET/POST /attendance` and `GET /export/attendance.csv` (`attendance.manage`),
-  `GET /members/:memberId/attendance?month=`.
+  `GET/POST /attendance`, `GET /attendance/roster`, `POST /attendance/absent` and
+  `GET /export/attendance.csv` (`attendance.manage`), `GET /members/:memberId/attendance?month=`.
 - Public (`/api/s/:slug`): `POST /kiosk/checkin {phone, code}` — rate-limited per IP+phone,
   library must be active, no staff session.
 
 ## Files
 
-- `attendance.service.js` — desk code, kiosk/manual entry points, day/member lists, CSV.
+- `attendance.service.js` — desk code, kiosk/manual entry points, day/member lists, roster,
+  marking absent, CSV.
 - `checkin.js` — the shared check-in flow (gates → record or check-out).
-- `attendance.repository.js` — SQL. `attendance.routes.js` — admin + public kiosk routers.
+- `attendance.repository.js` — SQL for `attendance` and `attendance_absences`.
+  `attendance.routes.js` — admin + public kiosk routers.
 
 Pure slot logic and tests live in `packages/shared/src/attendance`; the daily code and its
 test in `server/src/lib/dailyCode.js`.

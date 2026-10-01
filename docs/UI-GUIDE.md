@@ -89,6 +89,7 @@ Always use these icons for these concepts. Size 16 in buttons/inline, 18 in nav,
 | Platform settings | `SlidersHorizontal` | Print | `Printer` |
 | Change password | `KeyRound` | Check-in desk | `QrCode` |
 | Sign out | `LogOut` | Attendance / checked-in | `CalendarCheck` / `LogIn` |
+| Mark present | `UserCheck` | Mark absent | `UserX` |
 | Add | `Plus` | Notifications (M8) | `Bell` |
 | Edit | `Pencil` | Insights (M8) | `ChartColumn` |
 | Delete / void | `Trash2` / `Ban` | Mock tests (M9–10) | `GraduationCap` |

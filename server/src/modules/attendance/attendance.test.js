@@ -18,6 +18,7 @@ function fakeAttendanceRepo() {
   const rows = new Map(); // id -> row
   const key = (sub, day) => `${sub}|${day}`;
   const byKey = new Map();
+  const absences = new Map(); // `${sub}|${day}` -> true
   return {
     rows,
     findForDay: async (db, t, sub, day) => byKey.get(key(sub, day)) || null,
@@ -33,6 +34,12 @@ function fakeAttendanceRepo() {
     countPresentOnDay: async () => rows.size,
     listForDay: async () => [...rows.values()],
     listForMemberRange: async () => [...rows.values()],
+    listAbsentSubscriptionIds: async (db, t, day) =>
+      new Set(
+        [...absences.keys()].filter((k) => k.endsWith(`|${day}`)).map((k) => k.split("|")[0]),
+      ),
+    markAbsent: async (db, t, a) => absences.set(key(a.subscriptionId, a.localDate), true),
+    clearAbsence: async (db, t, sub, day) => absences.delete(key(sub, day)),
   };
 }
 
@@ -48,7 +55,21 @@ function setup({
   const service = createAttendanceService({
     db: fakeDb(),
     repo,
-    subscriptions: { listActiveSlotsOfMember: async () => bookings },
+    subscriptions: {
+      listActiveSlotsOfMember: async () => bookings,
+      listActiveBookings: async () =>
+        bookings.map((b) => ({
+          subscriptionId: b.subscriptionId,
+          memberId: member.id,
+          memberName: member.name,
+          memberCode: "M1",
+          slotId: "slot-1",
+          slotName: b.slotName,
+          startMin: b.startMin,
+          endMin: b.endMin,
+          seatLabel: null,
+        })),
+    },
     members: {
       findMember: async () => member,
       findMemberByPhone: async (db, t, phone) => (phone === member.phone ? member : null),
@@ -140,6 +161,32 @@ test("a wrong code and an unknown phone both fail without revealing which", asyn
 test("no active booking is refused", async () => {
   const { service } = setup({ bookings: [] });
   await assert.rejects(service.markManually(CTX, { memberId: member.id }), /no active booking/i);
+});
+
+test("the roster starts everyone unmarked, then reflects a check-in", async () => {
+  const { service } = setup();
+  const before = await service.listRoster(CTX, { date: "2026-10-01" });
+  assert.deepEqual(before.members.map((m) => m.status), ["unmarked"]);
+
+  const code = dailyCode(SECRET, TENANT, "2026-10-01");
+  await service.checkInByPhone(CTX, { phone: member.phone, code });
+  const after = await service.listRoster(CTX, { date: "2026-10-01" });
+  assert.equal(after.members[0].status, "present");
+});
+
+test("marking absent wins on the roster even after a QR check-in, without deleting it", async () => {
+  const { service, repo } = setup();
+  const code = dailyCode(SECRET, TENANT, "2026-10-01");
+  await service.checkInByPhone(CTX, { phone: member.phone, code });
+
+  await service.markAbsent(CTX, { memberId: member.id, subscriptionId: MORNING.subscriptionId });
+  const roster = await service.listRoster(CTX, { date: "2026-10-01" });
+  assert.equal(roster.members[0].status, "absent");
+  assert.equal(repo.rows.size, 1); // the check-in row is still there
+
+  await service.markManually(CTX, { memberId: member.id });
+  const after = await service.listRoster(CTX, { date: "2026-10-01" });
+  assert.equal(after.members[0].status, "present"); // present wins back
 });
 
 test("the desk shows today's code and the QR target", async () => {

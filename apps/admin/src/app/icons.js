@@ -42,9 +42,11 @@ import {
   Trash2,
   Undo2,
   User,
+  UserCheck,
   UserCog,
   UserPlus,
   Users,
+  UserX,
   Wallet,
 } from "lucide-react";
 
@@ -88,6 +90,8 @@ export const ICONS = Object.freeze({
   phone: Phone,
   date: CalendarDays,
   search: Search,
+  markPresent: UserCheck,
+  markAbsent: UserX,
 });
 
 /** Payment-mode icons (cash, UPI, card, bank, cheque, other, online). */
