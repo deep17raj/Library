@@ -146,3 +146,45 @@ export async function setSubscriptionHall(db, tenantId, id, hallId) {
     id,
   ]);
 }
+
+/** Students in a sit-anywhere hall, with their slots — the seat map's list for that hall. */
+export async function listActiveOccupantsOfHall(db, tenantId, hallId) {
+  return queryAll(
+    db,
+    `SELECT s.id AS subscriptionId, m.id AS memberId, m.name AS memberName, m.member_code AS memberCode,
+            sl.id AS slotId, sl.name AS slotName, sl.start_min AS startMin, sl.end_min AS endMin
+       FROM subscriptions s
+       JOIN members m ON m.id = s.member_id
+       JOIN slots sl ON sl.id = s.slot_id
+      WHERE s.tenant_id = ? AND s.hall_id = ? AND s.status = 'active'
+      ORDER BY sl.start_min, m.name`,
+    [tenantId, hallId],
+  );
+}
+
+/** Where each of these members sits now — one line per active subscription (members list). */
+export async function listActivePlacementsOfMembers(db, tenantId, memberIds) {
+  if (memberIds.length === 0) return [];
+  return queryAll(
+    db,
+    `SELECT s.member_id AS memberId, s.id AS subscriptionId, sl.name AS slotName,
+            sl.start_min AS startMin, h.name AS hallName, st.label AS seatLabel
+       FROM subscriptions s
+       JOIN slots sl ON sl.id = s.slot_id
+       JOIN halls h ON h.id = s.hall_id
+       LEFT JOIN seat_allocations a ON a.active_subscription_id = s.id
+       LEFT JOIN seats st ON st.id = a.seat_id
+      WHERE s.tenant_id = ? AND s.member_id IN (?) AND s.status = 'active'
+      ORDER BY sl.start_min`,
+    [tenantId, memberIds],
+  );
+}
+
+export async function countActiveSubscriptionsOfMember(db, tenantId, memberId) {
+  const row = await queryOne(
+    db,
+    "SELECT COUNT(*) AS total FROM subscriptions WHERE tenant_id = ? AND member_id = ? AND status = 'active'",
+    [tenantId, memberId],
+  );
+  return Number(row.total);
+}

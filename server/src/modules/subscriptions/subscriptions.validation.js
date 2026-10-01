@@ -11,3 +11,4 @@ export {
 } from "@app/shared/validation";
 
 export const availabilityQuerySchema = z.object({ slotId: idField });
+export const seatMapQuerySchema = z.object({ hallId: idField });

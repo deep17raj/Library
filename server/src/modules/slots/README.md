@@ -4,15 +4,16 @@ Time slots (Morning 06:00–12:00, Night 22:00–06:00…) and their **plans** �
 place prices live. Reading needs any staff login; changes need `slots.manage`.
 Every route answers `{ slots: [{ …slot, monthlyFeePaise, plans }] }`.
 
-| Route | Does |
-|---|---|
-| `GET /api/admin/slots` | slots with plans |
-| `POST /api/admin/slots` | name, `startMin`/`endMin` (minutes after midnight), `monthlyFeePaise` → slot + its default **Monthly** plan |
-| `PATCH /api/admin/slots/:id` | rename, recolour, archive, or change times |
-| `POST /api/admin/slots/:id/plans` | extra plans: "Quarterly, 3 months, ₹2,200", "15 days, ₹500" |
-| `PATCH /api/admin/plans/:id` | rename, reprice, archive |
+| Route                             | Does                                                                                                        |
+| --------------------------------- | ----------------------------------------------------------------------------------------------------------- |
+| `GET /api/admin/slots`            | slots with plans                                                                                            |
+| `POST /api/admin/slots`           | name, `startMin`/`endMin` (minutes after midnight), `monthlyFeePaise` → slot + its default **Monthly** plan |
+| `PATCH /api/admin/slots/:id`      | rename, recolour, archive, or change times                                                                  |
+| `POST /api/admin/slots/:id/plans` | extra plans: "Quarterly, 3 months, ₹2,200", "15 days, ₹500"                                                 |
+| `PATCH /api/admin/plans/:id`      | rename, reprice, archive                                                                                    |
 
 Rules
+
 - Slot times sit on the 30-minute grid and may run past midnight (`end < start`);
   shared `slots/slotCells.js` does the maths.
 - **Changing a slot's times** is checked against everyone holding it: no new clash on

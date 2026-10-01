@@ -151,3 +151,53 @@ export async function listFloatingHalls(db, tenantId) {
     [tenantId],
   );
 }
+
+const OCCUPANT_COLUMNS = `a.seat_id AS seatId, a.subscription_id AS subscriptionId, m.id AS memberId,
+  m.name AS memberName, m.member_code AS memberCode, sl.id AS slotId, sl.name AS slotName,
+  sl.start_min AS startMin, sl.end_min AS endMin`;
+
+/** Everyone sitting on a numbered seat in this hall right now (all slots). */
+export async function listActiveAllocationsInHall(db, tenantId, hallId) {
+  return queryAll(
+    db,
+    `SELECT ${OCCUPANT_COLUMNS}
+       FROM seat_allocations a
+       JOIN seats st ON st.id = a.seat_id
+       JOIN hall_tables t ON t.id = st.table_id
+       JOIN members m ON m.id = a.member_id
+       JOIN slots sl ON sl.id = a.slot_id
+      WHERE a.tenant_id = ? AND t.hall_id = ? AND a.status = 'active'
+      ORDER BY sl.start_min`,
+    [tenantId, hallId],
+  );
+}
+
+/** Who sat on this seat: current holders first, then most recently ended. */
+export async function listSeatHistory(db, tenantId, seatId, limit = 50) {
+  return queryAll(
+    db,
+    `SELECT a.id AS allocationId, a.status, a.start_on AS startOn, a.end_on AS endOn,
+            a.end_reason AS endReason, m.id AS memberId, m.name AS memberName, sl.name AS slotName
+       FROM seat_allocations a
+       JOIN members m ON m.id = a.member_id
+       JOIN slots sl ON sl.id = a.slot_id
+      WHERE a.tenant_id = ? AND a.seat_id = ?
+      ORDER BY a.status = 'active' DESC, COALESCE(a.ended_at, a.created_at) DESC, a.created_at DESC LIMIT ?`,
+    [tenantId, seatId, limit],
+  );
+}
+
+/** Every seat a member has held: current first, then most recently ended. */
+export async function listMemberSeatHistory(db, tenantId, memberId) {
+  return queryAll(
+    db,
+    `SELECT a.id AS allocationId, a.status, a.start_on AS startOn, a.end_on AS endOn,
+            a.end_reason AS endReason, st.label AS seatLabel, sl.name AS slotName
+       FROM seat_allocations a
+       JOIN seats st ON st.id = a.seat_id
+       JOIN slots sl ON sl.id = a.slot_id
+      WHERE a.tenant_id = ? AND a.member_id = ?
+      ORDER BY a.status = 'active' DESC, COALESCE(a.ended_at, a.created_at) DESC, a.created_at DESC`,
+    [tenantId, memberId],
+  );
+}

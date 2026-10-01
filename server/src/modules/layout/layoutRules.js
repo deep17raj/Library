@@ -53,8 +53,12 @@ export function labelsTaken(labels, field) {
 
 /** Friendly check first; the unique key (uq_seats_label) still decides races. */
 export async function assertSeatLabelsFree(deps, db, ctx, labels, field) {
-  const existing = await deps.repo.findExistingSeatLabels(db, ctx.tenantId, labels);
-  if (existing.length > 0) throw labelsTaken(existing, field);
+  const existing = new Set(
+    (await deps.repo.findExistingSeatLabels(db, ctx.tenantId, labels)).map((l) => l.toLowerCase()),
+  );
+  // Report clashes in the order they were asked for (A-1, A-2…), not the database's order.
+  const clashes = labels.filter((label) => existing.has(label.toLowerCase()));
+  if (clashes.length > 0) throw labelsTaken(clashes, field);
 }
 
 /**

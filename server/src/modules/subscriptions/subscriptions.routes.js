@@ -6,6 +6,7 @@ import { requirePermission } from "../../middleware/libraryContext.js";
 import { createSubscriptionsController } from "./subscriptions.controller.js";
 import {
   availabilityQuerySchema,
+  seatMapQuerySchema,
   changeSlotSchema,
   createSubscriptionSchema,
   endSubscriptionSchema,
@@ -26,6 +27,8 @@ export function createSubscriptionsRouter({ subscriptionsService }) {
     validateQuery(availabilityQuerySchema),
     asyncHandler(c.getAvailability),
   );
+  router.get("/seat-map", validateQuery(seatMapQuerySchema), asyncHandler(c.getSeatMap));
+  router.get("/seats/:id/history", asyncHandler(c.getSeatHistory));
   router.get("/members/:memberId/subscriptions", asyncHandler(c.listForMember));
   router.get("/subscriptions/:id", asyncHandler(c.getOne));
 

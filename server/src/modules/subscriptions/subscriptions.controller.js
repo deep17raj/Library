@@ -17,6 +17,12 @@ export function createSubscriptionsController({ subscriptionsService: service })
     postChangeSlot: one(200, (req) => service.changeSlot(req.ctx, req.params.id, req.body)),
     postSwap: one(200, (req) => service.swapSeats(req.ctx, req.body)),
     postEnd: one(200, (req) => service.endSubscription(req.ctx, req.params.id, req.body)),
+    async getSeatMap(req, res) {
+      res.json({ seatMap: await service.getSeatMap(req.ctx, req.validatedQuery.hallId) });
+    },
+    async getSeatHistory(req, res) {
+      res.json(await service.getSeatHistory(req.ctx, req.params.id));
+    },
     async getAvailability(req, res) {
       res.json({ availability: await service.getAvailability(req.ctx, req.validatedQuery.slotId) });
     },

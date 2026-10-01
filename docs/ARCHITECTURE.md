@@ -505,10 +505,14 @@ CREATE TABLE waitlist_entries (
   preferred_features JSON NULL,
   note VARCHAR(300) NOT NULL DEFAULT '',
   status ENUM('waiting','offered','converted','cancelled') NOT NULL DEFAULT 'waiting',
+  created_by CHAR(36) NULL,
   created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
   resolved_at DATETIME NULL,
+  queue_no BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,  -- arrival order (created_at is only to the second)
+  UNIQUE KEY uq_wait_queue_no (queue_no),
   KEY ix_wait_queue (tenant_id, slot_id, status, created_at),
-  CONSTRAINT fk_wait_slot FOREIGN KEY (tenant_id, slot_id) REFERENCES slots(tenant_id, id)
+  CONSTRAINT fk_wait_slot FOREIGN KEY (tenant_id, slot_id) REFERENCES slots(tenant_id, id),
+  CONSTRAINT fk_wait_member FOREIGN KEY (tenant_id, member_id) REFERENCES members(tenant_id, id)
 );
 
 -- ── Money ────────────────────────────────────────────────────────────
@@ -1179,24 +1183,27 @@ Lists support `?page=&pageSize=&q=`. Legend: **P** = public, **SA** = super_admi
 | POST | /admin/halls/:id/tables `{tableCount, seatsPerTable, seatPrefix, startNumber}` | S:layout.manage |
 | PATCH, DELETE | /admin/tables/:id · POST /admin/tables/:id/seats | S:layout.manage |
 | PATCH, DELETE | /admin/seats/:id (label, category, features, disable) | S:layout.manage |
-| GET | /admin/seat-map?hallId=&slotId= | any staff |
+| GET | /admin/seat-map?hallId= (tables → seats with current occupants of every slot; sit-anywhere halls: occupants + capacity — the app filters by slot) | any staff |
 | GET | /admin/availability?slotId= (free seat ids; sit-anywhere halls: capacity/used/free) | any staff |
-| GET | /admin/seats/:id (current occupants per slot, history) | any staff |
+| GET | /admin/seats/:id/history (who sat there, current first) | any staff |
 | GET | /admin/slots (with plans and monthlyFeePaise) | any staff |
 | POST | /admin/slots (creates the default Monthly plan) · PATCH /admin/slots/:id (times, archive) | S:slots.manage |
 | POST | /admin/slots/:id/plans · PATCH /admin/plans/:id | S:slots.manage |
-| GET, POST | /admin/members (create = member + subscriptions + seats + joining invoices, one tx) | S:members.manage |
-| GET, PATCH | /admin/members/:id · POST /admin/members/:id/photo, /id-proof (multipart) | S:members.manage |
-| POST | /admin/members/:id/reset-password | S:members.manage |
+| GET | /admin/members?q=&status=&slotId=&page=&pageSize= (with current placements) | any staff |
+| POST | /admin/members (member + bookings + waitlist conversion, one tx; joining invoices join in M5) | S:members.manage |
+| GET | /admin/members/:id (member, subscriptions, seat history) | any staff |
+| PATCH | /admin/members/:id · POST, DELETE /admin/members/:id/photo · POST /admin/members/:id/id-proof (multipart) | S:members.manage |
+| POST | /admin/members/:id/reset-password (student app login, M7) | S:members.manage |
 | GET | /admin/members/:id/id-proof (private file) | S:members.manage |
-| GET | /admin/members/:id/{subscriptions,invoices,payments,attendance,seat-history} | any staff |
+| GET | /admin/members/:id/{invoices,payments,attendance} (M5, M6) | any staff |
 | GET | /admin/subscriptions/:id | any staff |
 | POST | /admin/members/:id/subscriptions `{slotId, planId, seatId\|hallId, startOn?, collection?, lockerFeePaise?}` | S:seats.allocate |
 | POST | /admin/subscriptions/:id/move `{seatId\|hallId}` | S:seats.allocate |
 | POST | /admin/subscriptions/:id/change-slot `{slotId, planId, seatId\|hallId}` | S:seats.allocate |
 | POST | /admin/subscriptions/:id/end `{reason: left\|admin}` (today; future end dates: M5) | S:seats.allocate |
 | POST | /admin/subscriptions/swap `{subscriptionA, subscriptionB}` | S:seats.allocate |
-| GET, POST | /admin/waitlist · PATCH /admin/waitlist/:id · POST /admin/waitlist/:id/convert | S:members.manage |
+| GET | /admin/waitlist?slotId=&view=open\|all (with queue position) | any staff |
+| POST | /admin/waitlist · PATCH /admin/waitlist/:id (offered / waiting / cancelled); conversion happens in POST /admin/members via `waitlistEntryId` | S:members.manage |
 | GET | /admin/dues (who owes, ageing) · /admin/invoices?memberId= | any staff |
 | POST | /admin/invoices (manual "other" charge) · /admin/invoices/:id/void | S:payments.void |
 | POST | /admin/payments ⏱ `{memberId, amountPaise, mode, invoiceIds?}` | S:payments.collect |

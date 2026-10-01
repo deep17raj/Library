@@ -21,5 +21,10 @@ Format: **date — area — what — why it was accepted — how to pay it off.*
 - **2026-10-01 — ending on a future date** — `POST /subscriptions/:id/end` ends today.
   Planned end dates (`end_on` in the future, package expiry) need the job scheduler
   from milestone 5, which will end due subscriptions and free their seats.
-- **2026-10-01 — members created only in tests** — the members API arrives in
-  milestone 4; until then `server/testing/seed.js` inserts members directly.
+
+- **2026-10-01 — ID proofs are images only** — uploads are re-encoded with sharp, which
+  can't read PDFs. Accept PDFs later by validating the PDF header and storing as-is in
+  private storage.
+- **2026-10-01 — locker fee not on the member form** — the API accepts
+  `lockerFeePaise` per booking, but the form leaves it at 0 until billing (milestone 5)
+  shows what it charges.

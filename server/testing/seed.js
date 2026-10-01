@@ -1,8 +1,9 @@
 import crypto from "node:crypto";
 
 /**
- * Insert a member straight into the database. Used by integration tests until the
- * members API exists (milestone 4); keep the columns in step with the members table.
+ * Insert a member straight into the database, for tests that only need members to
+ * exist (the members API is tested in members.integration.test.js). Keep the
+ * columns in step with the members table.
  */
 export async function insertMember(pool, tenantId, name) {
   const id = crypto.randomUUID();

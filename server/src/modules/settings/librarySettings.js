@@ -27,3 +27,13 @@ export async function billingSettings(db, tenantId) {
     defaultCollection: row?.default_collection || "advance",
   };
 }
+
+/** "S" → member codes S1001, S1002… */
+export async function memberCodePrefix(db, tenantId) {
+  const row = await queryOne(
+    db,
+    "SELECT member_code_prefix FROM library_settings WHERE tenant_id = ?",
+    [tenantId],
+  );
+  return row?.member_code_prefix ?? "S";
+}

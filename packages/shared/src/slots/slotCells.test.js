@@ -73,3 +73,13 @@ test("clock helpers", () => {
   assert.equal(displaySlotTimes(OVERNIGHT), "10:00 pm – 6:00 am");
   assert.equal(displaySlotTimes(EVENING), "12:00 pm – 6:00 pm");
 });
+
+test("seat status per slot: free, used at other times, or taken", async () => {
+  const { seatStatusForSlot, occupantsDuringSlot } = await import("./seatStatus.js");
+  const ravi = { ...MORNING, memberName: "Ravi" };
+  assert.equal(seatStatusForSlot([], MORNING), "free");
+  assert.equal(seatStatusForSlot([ravi], EVENING), "partial", "free in the evening");
+  assert.equal(seatStatusForSlot([ravi], FULL_DAY), "taken");
+  assert.equal(seatStatusForSlot([ravi], null), "taken", "all-day view");
+  assert.deepEqual(occupantsDuringSlot([ravi], EVENING), []);
+});

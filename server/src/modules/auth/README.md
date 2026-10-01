@@ -7,6 +7,7 @@ Sign-in for **staff, owners and super admins** (students sign in separately, mil
 - `POST /api/auth/logout`, `GET /api/auth/me`, `POST /api/auth/password`.
 
 Rules
+
 - Every request re-reads the user: a **disabled user**, a **changed password**
   (`token_version` bump) or a **suspended library** ends the session immediately.
 - Unknown email and wrong password give the same error and take the same time.

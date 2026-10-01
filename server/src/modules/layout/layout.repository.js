@@ -203,3 +203,14 @@ export async function deleteHallWithContents(db, tenantId, id) {
   await execute(db, "DELETE FROM hall_tables WHERE tenant_id = ? AND hall_id = ?", [tenantId, id]);
   await execute(db, "DELETE FROM halls WHERE tenant_id = ? AND id = ?", [tenantId, id]);
 }
+
+/** All seats of one hall in display order (table order, then seat order). */
+export async function listSeatsOfHall(db, tenantId, hallId) {
+  const rows = await queryAll(
+    db,
+    `SELECT st.* FROM seats st JOIN hall_tables t ON t.id = st.table_id
+      WHERE st.tenant_id = ? AND t.hall_id = ? ORDER BY t.sort_order, st.sort_order`,
+    [tenantId, hallId],
+  );
+  return rows.map(toSeat);
+}

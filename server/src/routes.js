@@ -17,6 +17,10 @@ import { createSlotsService } from "./modules/slots/slots.service.js";
 import { createSlotsRouter } from "./modules/slots/slots.routes.js";
 import { createSubscriptionsService } from "./modules/subscriptions/subscriptions.service.js";
 import { createSubscriptionsRouter } from "./modules/subscriptions/subscriptions.routes.js";
+import { createMembersService } from "./modules/members/members.service.js";
+import { createMembersRouter } from "./modules/members/members.routes.js";
+import { createWaitlistService } from "./modules/waitlist/waitlist.service.js";
+import { createWaitlistRouter } from "./modules/waitlist/waitlist.routes.js";
 
 /**
  * Builds every service once and mounts every module router under /api.
@@ -34,6 +38,12 @@ export function createApiRouter({ db, config }) {
     settingsService: createSettingsService({ db, storageDir: config.storageDir }),
     staffService: createStaffService({ db }),
     layoutService: createLayoutService({ db }),
+    membersService: createMembersService({
+      db,
+      storageDir: config.storageDir,
+      seating: subscriptionsService,
+    }),
+    waitlistService: createWaitlistService({ db }),
   };
   const requireStaff = createRequireStaff({ authService: services.authService, config });
   const requireLibrary = createRequireLibrary({ findLibraryById: (id) => findLibraryById(db, id) });
@@ -66,6 +76,8 @@ function createAdminRouter({ services, requireStaff, requireLibrary }) {
   admin.use("/staff", createStaffRouter({ staffService: services.staffService }));
   admin.use(createLayoutRouter({ layoutService: services.layoutService }));
   admin.use(createSlotsRouter({ slotsService: services.slotsService }));
+  admin.use("/members", createMembersRouter({ membersService: services.membersService }));
+  admin.use("/waitlist", createWaitlistRouter({ waitlistService: services.waitlistService }));
   admin.use(createSubscriptionsRouter({ subscriptionsService: services.subscriptionsService }));
   return admin;
 }
