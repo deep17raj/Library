@@ -41,7 +41,7 @@ with `require`).
 /
 ├─ app.js                      Passenger entry (CJS) → import('./server/src/main.js')
 ├─ package.json                workspaces + root scripts: dev, build, test, lint, verify
-├─ eslint.config.js  .prettierrc  .env.example  CLAUDE.md
+├─ eslint.config.mjs  .prettierrc  .env.example  CLAUDE.md
 ├─ docs/
 │  ├─ ARCHITECTURE.md  GYM-REFERENCE-NOTES.md  TECH-DEBT.md
 │  └─ DEPLOY-SHARED-HOSTING.md            (milestone 11)
@@ -104,6 +104,14 @@ interface + Razorpay + webhook), `attempts` (attempt engine, results, leaderboar
 - `*.validation.js` — re-exports/adapts the shared schema for the route.
 - `*.test.js` — tests for the service rules (`node:test`).
 - `README.md` — what the module does, its rules, its tables, in plain words.
+
+**Service pattern.** Service logic is small module-level functions that take their
+dependencies first — `createLibrary(deps, actor, input)` — and `create<Name>Service(deps)`
+binds them with `lib/bindDeps.js`. Unit tests pass in-memory fake repositories as `deps`
+(`server/testing/fakes.js`); integration tests in `server/testing/` run the real HTTP
+stack against MySQL when `TEST_DATABASE_URL` is set. A table is owned by one module's
+repository (e.g. `users` → `auth/users.repository.js`); other modules call its functions
+rather than writing SQL for it.
 
 **Libraries chosen** (all pure JS — nothing to compile on cPanel except `sharp`,
 which ships prebuilt and already runs on the gym host): `express`, `mysql2`, `zod`
@@ -1123,6 +1131,7 @@ Lists support `?page=&pageSize=&q=`. Legend: **P** = public, **SA** = super_admi
 **Auth & public**
 | Method | Path | Who |
 |---|---|---|
+| GET | /health (DB reachable — for deploy checks) | P |
 | POST | /auth/login ⏱ · /auth/logout | P |
 | GET | /auth/me | A, S, SA |
 | POST | /auth/password | A, S, SA |
@@ -1135,10 +1144,9 @@ Lists support `?page=&pageSize=&q=`. Legend: **P** = public, **SA** = super_admi
 | Method | Path |
 |---|---|
 | GET, POST | /platform/libraries |
-| GET, PATCH | /platform/libraries/:id (name, share bps) |
+| GET, PATCH | /platform/libraries/:id (GET includes usage + logins; PATCH name, share bps) |
 | PATCH | /platform/libraries/:id/status (activate / suspend) |
-| GET | /platform/libraries/:id/usage (members, seats, active subs, storage, last activity) |
-| GET, POST | /platform/libraries/:id/admins · PATCH /platform/users/:id/status |
+| POST | /platform/libraries/:id/owners · PATCH /platform/users/:id/status |
 | GET, PUT | /platform/settings |
 | GET, POST, PATCH, DELETE | /platform/series, /platform/series/:id |
 | GET, POST, PATCH, DELETE | /platform/tests, /platform/tests/:id (+ /publish, /unpublish, /rescore) |

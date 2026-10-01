@@ -1,0 +1,19 @@
+/**
+ * Every `error.code` the API can return. The UI branches on these, so they are
+ * stable identifiers — add new ones, never rename existing ones.
+ */
+export const ERROR_CODES = Object.freeze({
+  VALIDATION_FAILED: "VALIDATION_FAILED",
+  UNAUTHENTICATED: "UNAUTHENTICATED",
+  INVALID_CREDENTIALS: "INVALID_CREDENTIALS",
+  FORBIDDEN: "FORBIDDEN",
+  NOT_FOUND: "NOT_FOUND",
+  CONFLICT: "CONFLICT",
+  RATE_LIMITED: "RATE_LIMITED",
+  LIBRARY_SUSPENDED: "LIBRARY_SUSPENDED",
+  ACCOUNT_DISABLED: "ACCOUNT_DISABLED",
+  SLUG_TAKEN: "SLUG_TAKEN",
+  EMAIL_TAKEN: "EMAIL_TAKEN",
+  BAD_REQUEST: "BAD_REQUEST",
+  INTERNAL: "INTERNAL",
+});

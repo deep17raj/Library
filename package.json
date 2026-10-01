@@ -1,0 +1,33 @@
+{
+  "name": "study-library",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Multi-tenant study library (reading room) management with a mock-test store.",
+  "main": "app.js",
+  "engines": {
+    "node": ">=18.18"
+  },
+  "workspaces": [
+    "packages/shared",
+    "server",
+    "apps/admin"
+  ],
+  "scripts": {
+    "start": "node app.js",
+    "dev": "concurrently -n server,admin -c blue,green \"npm:dev -w server\" \"npm:dev -w apps/admin\"",
+    "test": "npm test --workspaces --if-present",
+    "lint": "eslint . && prettier --check .",
+    "format": "prettier --write .",
+    "build": "npm run build --workspaces --if-present",
+    "verify": "npm run lint && npm test && npm run build"
+  },
+  "devDependencies": {
+    "@eslint/js": "^9.14.0",
+    "concurrently": "^9.1.0",
+    "eslint": "^9.14.0",
+    "eslint-plugin-react": "^7.37.2",
+    "eslint-plugin-react-hooks": "^5.0.0",
+    "globals": "^15.12.0",
+    "prettier": "^3.3.3"
+  }
+}

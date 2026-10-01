@@ -94,13 +94,17 @@ Server state via TanStack Query hooks inside the feature; no app-wide data store
 - Never trust the client for "paid": only a verified gateway signature/webhook marks an order paid.
 - Secrets only in `.env`; never log tokens, passwords, or full payment payloads.
 
-## Commands (once milestone 1 exists)
+## Commands
 
 ```
 npm install            install all workspaces
-npm run dev            server + both apps in watch mode
-npm test               all node:test suites
-npm run lint           ESLint + Prettier check
-npm run build          build admin + student apps
+npm run dev            API (:5060) + admin Vite dev server (:5173/admin/)
+npm test               all node:test suites (integration too if TEST_DATABASE_URL is set)
+npm run lint           ESLint + Prettier check   (npm run format fixes formatting)
+npm run build          build the apps
 npm run verify         lint + test + build — must pass before a commit
 ```
+
+Local setup: copy `.env.example` to `.env`. Set `TEST_DATABASE_URL` (database name
+ending in `_test`, it is dropped on every run) so the MySQL integration tests run.
+How server modules are written: `server/README.md`. Admin app layout: `apps/admin/README.md`.

@@ -1,0 +1,14 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  /* Default brand colour (indigo); a library's theme replaces these. */
+  --brand: 79 70 229;
+  --brand-dark: 67 56 202;
+  --brand-light: 224 231 255;
+}
+
+body {
+  @apply text-slate-900 antialiased;
+}

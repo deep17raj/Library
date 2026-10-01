@@ -1,0 +1,29 @@
+{
+  "name": "@app/shared",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "Rules, schemas, helpers and UI primitives shared by the server and both apps.",
+  "exports": {
+    "./constants": "./src/constants/index.js",
+    "./money": "./src/money/index.js",
+    "./time": "./src/time/index.js",
+    "./validation": "./src/validation/index.js",
+    "./api": "./src/api/index.js",
+    "./ui": "./src/ui/index.js"
+  },
+  "scripts": {
+    "test": "node --test"
+  },
+  "dependencies": {
+    "zod": "^3.23.8"
+  },
+  "peerDependencies": {
+    "react": "^18.3.1"
+  },
+  "peerDependenciesMeta": {
+    "react": {
+      "optional": true
+    }
+  }
+}
