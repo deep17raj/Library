@@ -5,12 +5,16 @@ import { Button, Spinner, cx } from "@app/shared/ui";
 import { useSession } from "./session.js";
 import { NAV_ITEMS } from "./navigation.js";
 import { useLogout } from "../features/auth/api.js";
+import { useLibrarySettings } from "../features/settings/api.js";
+import { useBranding } from "./useBranding.js";
 
 /** Signed-in layout: sidebar (drawer on phones) + page. Sends signed-out people to /login. */
 export function Shell() {
   const { data: user, isLoading } = useSession();
   const location = useLocation();
   const [drawerOpen, setDrawerOpen] = useState(false);
+  const { data: settings } = useLibrarySettings();
+  useBranding(settings);
 
   if (isLoading) return <Spinner />;
   if (!user) return <Navigate to="/login" replace state={{ from: location.pathname }} />;
@@ -18,12 +22,17 @@ export function Shell() {
   return (
     <div className="min-h-screen md:flex">
       <header className="flex items-center justify-between border-b border-slate-200 bg-white px-4 py-3 md:hidden">
-        <span className="font-semibold">{user.library?.name || "Study Library"}</span>
+        <span className="font-semibold">{libraryTitle(user, settings)}</span>
         <Button variant="ghost" onClick={() => setDrawerOpen((open) => !open)} aria-label="Menu">
           ☰
         </Button>
       </header>
-      <Sidebar user={user} open={drawerOpen} onNavigate={() => setDrawerOpen(false)} />
+      <Sidebar
+        user={user}
+        settings={settings}
+        open={drawerOpen}
+        onNavigate={() => setDrawerOpen(false)}
+      />
       <main className="flex-1 px-4 py-6 md:px-8">
         <Outlet />
       </main>
@@ -31,7 +40,12 @@ export function Shell() {
   );
 }
 
-function Sidebar({ user, open, onNavigate }) {
+/** The library's own display name once settings load; the platform name before. */
+function libraryTitle(user, settings) {
+  return settings?.displayName || user.library?.name || "Study Library";
+}
+
+function Sidebar({ user, settings, open, onNavigate }) {
   const logout = useLogout();
   return (
     <aside
@@ -41,7 +55,10 @@ function Sidebar({ user, open, onNavigate }) {
       )}
     >
       <div className="hidden px-5 py-5 md:block">
-        <p className="font-semibold text-slate-900">{user.library?.name || "Study Library"}</p>
+        {settings?.logoUrl && (
+          <img src={settings.logoUrl} alt="" className="mb-2 h-10 max-w-full object-contain" />
+        )}
+        <p className="font-semibold text-slate-900">{libraryTitle(user, settings)}</p>
         <p className="text-xs text-slate-500">{ROLE_LABELS[user.role]}</p>
       </div>
       <nav className="flex flex-1 flex-col gap-1 px-3 py-2">

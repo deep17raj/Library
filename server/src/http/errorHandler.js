@@ -1,3 +1,4 @@
+import multer from "multer";
 import { ZodError } from "zod";
 import { ERROR_CODES } from "@app/shared/constants";
 import { issuesToFields } from "@app/shared/validation";
@@ -36,6 +37,22 @@ export function errorHandler(error, req, res, _next) {
     // A service should have caught this with a friendlier message; the unique key
     // is the backstop that still keeps the data right.
     return sendError(res, 409, ERROR_CODES.CONFLICT, "This conflicts with an existing record");
+  }
+  if (error?.code === "ER_ROW_IS_REFERENCED_2") {
+    // A foreign key still points at the row: it has history (e.g. a seat that was
+    // allocated). History is never deleted, so the answer is to disable it.
+    return sendError(
+      res,
+      409,
+      ERROR_CODES.IN_USE,
+      "This is in use, so it can't be deleted. Disable it instead.",
+    );
+  }
+  if (error instanceof multer.MulterError) {
+    const message = error.code === "LIMIT_FILE_SIZE" ? "The file is too large" : "Upload failed";
+    return sendError(res, 413, ERROR_CODES.BAD_REQUEST, message, {
+      [error.field || "file"]: message,
+    });
   }
   console.error(`[${req.method} ${req.originalUrl}]`, error);
   return sendError(res, 500, ERROR_CODES.INTERNAL, "Something went wrong on our side");

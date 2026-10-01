@@ -4,7 +4,7 @@ import { Alert, Button, Card, EmptyState, PageHeader, Spinner } from "@app/share
 import { displayDateTime } from "@app/shared/time";
 import { useLibraries } from "./api.js";
 import { CreateLibraryDialog } from "./components/CreateLibraryDialog.jsx";
-import { StatusBadge } from "./components/StatusBadge.jsx";
+import { StatusBadge } from "../../app/StatusBadge.jsx";
 
 export function LibrariesPage() {
   const { data: libraries, isLoading, error } = useLibraries();

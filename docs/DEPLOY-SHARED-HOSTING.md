@@ -23,7 +23,9 @@ first start by `server/src/migrations/`.
 
 ## 3. Upload
 
-Zip and upload **everything except** `node_modules/`, `.env`, `.git/`. Make sure the
+Zip and upload **everything except** `node_modules/`, `.env`, `.git/` and
+`server/storage/` (uploaded logos/photos live there — never overwrite it on a redeploy;
+or set `STORAGE_DIR` to a folder outside the app). Make sure the
 zip **includes** `apps/admin/dist/`. Extract it into the app folder, e.g.
 `/home/CPUSER/library.example.com`.
 

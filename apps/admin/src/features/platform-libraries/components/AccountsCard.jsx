@@ -4,7 +4,7 @@ import { displayDateTime } from "@app/shared/time";
 import { Alert, Button, Card } from "@app/shared/ui";
 import { useSetUserStatus } from "../api.js";
 import { AddOwnerDialog } from "./AddOwnerDialog.jsx";
-import { StatusBadge } from "./StatusBadge.jsx";
+import { StatusBadge } from "../../../app/StatusBadge.jsx";
 
 /** Owner and staff logins of a library; the super admin can add owners and disable logins. */
 export function AccountsCard({ library }) {

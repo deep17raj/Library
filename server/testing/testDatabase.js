@@ -5,14 +5,18 @@ import { createPool } from "../src/db/pool.js";
 /**
  * Integration tests run only when TEST_DATABASE_URL points at a MySQL server, e.g.
  *   TEST_DATABASE_URL=mysql://root:pass@localhost:3306/study_library_test
- * The database named in the URL is DROPPED and recreated — never point it at real data.
+ * Each test file gets its own database "<name>_<suffix>" (node --test runs files in
+ * parallel), which is DROPPED and recreated — never point this at real data.
  */
 export const TEST_DATABASE_URL = process.env.TEST_DATABASE_URL || "";
 
-export async function createFreshTestDatabase() {
+/** @param {string} suffix short name of the test file, e.g. "platform" */
+export async function createFreshTestDatabase(suffix) {
   const url = new URL(TEST_DATABASE_URL);
-  const name = url.pathname.replace(/^\//, "");
-  if (!/_test$/.test(name)) throw new Error("TEST_DATABASE_URL database name must end in _test");
+  const baseName = url.pathname.replace(/^\//, "");
+  if (!/_test$/.test(baseName))
+    throw new Error("TEST_DATABASE_URL database name must end in _test");
+  const name = `${baseName}_${suffix}`;
 
   const admin = await mysql.createConnection({
     host: url.hostname,
@@ -24,7 +28,8 @@ export async function createFreshTestDatabase() {
   await admin.query(`CREATE DATABASE \`${name}\` CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci`);
   await admin.end();
 
-  const dbConfig = { uri: TEST_DATABASE_URL, connectionLimit: 5 };
+  url.pathname = `/${name}`;
+  const dbConfig = { uri: url.toString(), connectionLimit: 5 };
   await runMigrations(dbConfig, { log: () => {} });
   return { dbConfig, pool: createPool(dbConfig) };
 }

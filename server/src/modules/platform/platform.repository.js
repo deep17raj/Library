@@ -1,5 +1,6 @@
 import { execute, queryAll, queryOne } from "../../db/transaction.js";
 import { readJsonColumn } from "../../db/json.js";
+import { buildPatch } from "../../db/patch.js";
 
 const LIBRARY_COLUMNS =
   "l.id, l.slug, l.name, l.status, l.mocktest_share_bps, l.created_at, l.suspended_at";
@@ -59,18 +60,9 @@ export async function insertLibrary(db, { id, slug, name }) {
 
 /** @param {{ name?: string, mocktestShareBps?: number | null }} patch */
 export async function updateLibrary(db, id, patch) {
-  const sets = [];
-  const params = [];
-  if (patch.name !== undefined) {
-    sets.push("name = ?");
-    params.push(patch.name);
-  }
-  if (patch.mocktestShareBps !== undefined) {
-    sets.push("mocktest_share_bps = ?");
-    params.push(patch.mocktestShareBps);
-  }
-  if (sets.length === 0) return;
-  await execute(db, `UPDATE libraries SET ${sets.join(", ")} WHERE id = ?`, [...params, id]);
+  const set = buildPatch(patch, { name: "name", mocktestShareBps: "mocktest_share_bps" });
+  if (!set) return;
+  await execute(db, `UPDATE libraries SET ${set.assignments} WHERE id = ?`, [...set.params, id]);
 }
 
 export async function updateLibraryStatus(db, id, status) {

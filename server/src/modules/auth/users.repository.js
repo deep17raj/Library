@@ -132,3 +132,44 @@ export async function updateUserStatus(db, id, status) {
   );
   return result.affectedRows > 0;
 }
+
+// ── Library-scoped versions: used by the staff module. Every statement filters on
+// tenant_id, so a staff manager can never touch another library's logins. ──
+
+export async function findLibraryUser(db, tenantId, id) {
+  return toUser(
+    await queryOne(
+      db,
+      `SELECT ${USER_COLUMNS} FROM users u LEFT JOIN libraries l ON l.id = u.tenant_id
+       WHERE u.tenant_id = ? AND u.id = ?`,
+      [tenantId, id],
+    ),
+  );
+}
+
+/** Permissions are re-read on every request, so changing them needs no sign-out. */
+export async function updateLibraryUserProfile(db, tenantId, id, { name, permissions }) {
+  await execute(
+    db,
+    `UPDATE users SET name = COALESCE(?, name), permissions = COALESCE(?, permissions)
+      WHERE tenant_id = ? AND id = ?`,
+    [name ?? null, permissions ? JSON.stringify(permissions) : null, tenantId, id],
+  );
+}
+
+export async function setLibraryUserStatus(db, tenantId, id, status) {
+  await execute(
+    db,
+    "UPDATE users SET status = ?, token_version = token_version + 1 WHERE tenant_id = ? AND id = ?",
+    [status, tenantId, id],
+  );
+}
+
+export async function setLibraryUserPassword(db, tenantId, id, passwordHash) {
+  await execute(
+    db,
+    `UPDATE users SET password_hash = ?, token_version = token_version + 1
+      WHERE tenant_id = ? AND id = ?`,
+    [passwordHash, tenantId, id],
+  );
+}

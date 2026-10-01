@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { toPaise } from "../money/paise.js";
 
 // Building blocks reused by the per-form schemas. Messages are written for the
 // person filling the form, because they are shown next to the field as-is.
@@ -35,6 +36,42 @@ export const basisPointsField = z.coerce
   .int("Use a whole number")
   .min(0, "Cannot be negative")
   .max(10000, "Cannot be more than 100%");
+
+/** Database ids are UUIDs; anything else is rejected before it reaches SQL. */
+export const idField = z.string({ required_error: "Required" }).uuid("Invalid id");
+
+/** An optional reference chosen in a <select>: "" (the "none" option) means null. */
+export const nullableIdField = z.preprocess(
+  (value) => (value === "" ? null : value),
+  idField.nullable(),
+);
+
+/** Indian mobile number, stored as its 10 digits. "" allowed — wrap with .optional() for absence. */
+export const phoneField = z
+  .string()
+  .transform((value) => value.replace(/\D/g, "").replace(/^(91|0)(?=\d{10}$)/, ""))
+  .refine(
+    (digits) => digits === "" || /^[6-9]\d{9}$/.test(digits),
+    "Enter a 10-digit mobile number",
+  );
+
+/** What a person types as rupees ("1,250.50") → integer paise for the API. */
+export const rupeesField = z.union([z.string(), z.number()]).transform((value, ctx) => {
+  const paise = toPaise(value);
+  if (paise === null) {
+    ctx.addIssue({ code: z.ZodIssueCode.custom, message: "Enter an amount like 800 or 799.50" });
+    return z.NEVER;
+  }
+  return paise;
+});
+
+export const paiseField = z.coerce
+  .number({ invalid_type_error: "Enter an amount" })
+  .int("Amount must be in whole paise")
+  .min(0, "Cannot be negative")
+  .max(100_000_000, "Amount is too large");
+
+export const sortOrderField = z.coerce.number().int().min(0).max(30000);
 
 /** "Sardar Patel Library" → "sardar-patel-library" — a suggestion for slugField. */
 export function suggestSlug(text) {

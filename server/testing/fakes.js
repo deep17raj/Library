@@ -14,36 +14,57 @@ export function fakeDb() {
 /** Mirrors modules/auth/users.repository.js. */
 export function fakeUsersRepository(initial = []) {
   const users = new Map(initial.map((user) => [user.id, { ...user }]));
+  return { users, ...platformUserFunctions(users), ...libraryUserFunctions(users) };
+}
+
+/** The unscoped functions (auth, platform). */
+function platformUserFunctions(users) {
+  const all = () => [...users.values()];
   return {
-    users,
-    findUserByEmail: async (db, email) =>
-      [...users.values()].find((u) => u.email === email) || null,
+    findUserByEmail: async (db, email) => all().find((u) => u.email === email) || null,
     findUserById: async (db, id) => users.get(id) || null,
-    listUsersOfLibrary: async (db, tenantId) =>
-      [...users.values()].filter((u) => u.tenantId === tenantId),
-    countUsersWithRole: async (db, role) =>
-      [...users.values()].filter((u) => u.role === role).length,
+    listUsersOfLibrary: async (db, tenantId) => all().filter((u) => u.tenantId === tenantId),
+    countUsersWithRole: async (db, role) => all().filter((u) => u.role === role).length,
     insertUser: async (db, user) => {
-      users.set(user.id, {
-        permissions: [],
-        status: "active",
-        tokenVersion: 0,
-        library: null,
-        ...user,
-      });
+      const defaults = { permissions: [], status: "active", tokenVersion: 0, library: null };
+      users.set(user.id, { ...defaults, ...user });
     },
     touchLastLogin: async () => {},
     updatePassword: async (db, id, passwordHash) => {
-      const user = users.get(id);
-      user.passwordHash = passwordHash;
-      user.tokenVersion += 1;
+      Object.assign(users.get(id), { passwordHash });
+      users.get(id).tokenVersion += 1;
     },
     updateUserStatus: async (db, id, status) => {
-      const user = users.get(id);
-      user.status = status;
-      user.tokenVersion += 1;
+      Object.assign(users.get(id), { status });
+      users.get(id).tokenVersion += 1;
       return true;
     },
+  };
+}
+
+/** The tenant-scoped functions (staff); like the SQL, they ignore other libraries' rows. */
+function libraryUserFunctions(users) {
+  const inLibrary = (tenantId, id) => {
+    const user = users.get(id);
+    return user && user.tenantId === tenantId ? user : null;
+  };
+  const changeAndSignOut = (tenantId, id, changes) => {
+    const user = inLibrary(tenantId, id);
+    if (!user) return;
+    Object.assign(user, changes);
+    user.tokenVersion += 1;
+  };
+  return {
+    findLibraryUser: async (db, tenantId, id) => inLibrary(tenantId, id),
+    updateLibraryUserProfile: async (db, tenantId, id, { name, permissions }) => {
+      const user = inLibrary(tenantId, id);
+      if (user && name) user.name = name;
+      if (user && permissions) user.permissions = permissions;
+    },
+    setLibraryUserStatus: async (db, tenantId, id, status) =>
+      changeAndSignOut(tenantId, id, { status }),
+    setLibraryUserPassword: async (db, tenantId, id, passwordHash) =>
+      changeAndSignOut(tenantId, id, { passwordHash }),
   };
 }
 
@@ -58,6 +79,7 @@ export function testConfig(overrides = {}) {
     listenTarget: "0",
     appBaseUrl: "",
     trustProxy: false,
+    storageDir: "",
     db: {},
     auth: {
       jwtSecret: "test-secret-that-is-long-enough-for-hs256",

@@ -10,7 +10,11 @@ src/
     api.js               the API client (shared createApiClient)
     queryClient.js       TanStack Query client + SESSION_KEY
     session.js           useSession() — the signed-in user, from GET /api/auth/me
-    forms.js             useSchemaForm (react-hook-form + shared zod schema), applyServerErrors
+    forms.js             useSchemaForm, useDialogForm (reset on open, submit, server errors)
+    FormDialog.jsx       dialog with one form + Cancel/submit footer (pair with useDialogForm)
+    permissions.js       useCan(permission) — hide buttons the user can't use
+    useBranding.js       library brand colour → CSS variables, tab title
+    StatusBadge.jsx      active / suspended / disabled badge
     navigation.js        sidebar items and who sees them
     Shell.jsx            signed-in layout; redirects to /login when signed out
   features/<feature>/    Page components, components/, hooks, api.js (query hooks)

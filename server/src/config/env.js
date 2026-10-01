@@ -11,6 +11,7 @@ export const REPO_ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url
  * @property {string} listenTarget  TCP port, or a Unix socket path from Passenger
  * @property {string} appBaseUrl
  * @property {boolean} trustProxy
+ * @property {string} storageDir  uploads: <dir>/public is served at /files, <dir>/private never is
  * @property {{ uri?: string, host: string, port: number, user: string, password: string,
  *   database: string, connectionLimit: number }} db
  * @property {{ jwtSecret: string, staffCookie: string, cookieSecure: boolean,
@@ -33,6 +34,7 @@ export function getConfig() {
     listenTarget: env.PORT || "5060",
     appBaseUrl: (env.APP_BASE_URL || "").trim().replace(/\/+$/, ""),
     trustProxy: env.TRUST_PROXY !== "false",
+    storageDir: path.resolve(env.STORAGE_DIR || path.join(REPO_ROOT, "server", "storage")),
     db: readDbConfig(env),
     auth: {
       jwtSecret: resolveJwtSecret(env.JWT_SECRET, isProduction),

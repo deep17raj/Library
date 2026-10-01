@@ -9,12 +9,13 @@ src/
   app.js         Express app; the only place middleware order is decided
   routes.js      builds every service once and mounts every module router
   config/        env.js — reads .env once; nothing else touches process.env
-  db/            pool, withTransaction/queryOne/queryAll/execute, migration runner
+  db/            pool, withTransaction/queryOne/queryAll/execute, buildPatch, migration runner
   migrations/    NNN_name.sql, applied once each in order (schema_migrations)
   http/          AppError, errorHandler (API error format), asyncHandler, validateBody
-  middleware/    staffAuth, failureThrottle (rate limits), requestGuards (CSRF, headers)
-  lib/           jwt, password, cookies, bindDeps
-  static/        serves apps/admin/dist at /admin
+  middleware/    staffAuth, libraryContext (req.ctx + requirePermission), upload (multer),
+                 failureThrottle (rate limits), requestGuards (CSRF, headers)
+  lib/           jwt, password, cookies, images (sharp re-encode), bindDeps
+  static/        serves apps/admin/dist at /admin and storage/public at /files
   modules/       one folder per feature (see each README.md)
 testing/         fakes for unit tests, MySQL helpers + integration tests
 ```
@@ -26,10 +27,13 @@ testing/         fakes for unit tests, MySQL helpers + integration tests
 2. Service: small module-level functions that take `deps` first, exported through
    `create<Name>Service(deps)` with `bindDeps` — tests pass fake repositories as deps.
 3. Repository functions take `(db, tenantId, …)`; `db` is the pool or a transaction.
-4. Mount the router in `routes.js`; add tables in a new `migrations/NNN_*.sql`.
+4. Mount the router in `routes.js` — library features go under `createAdminRouter`, which
+   already applies `requireStaff` + `requireLibrary` (so `req.ctx.tenantId` is set); guard
+   each route with `requirePermission(...)`. Add tables in a new `migrations/NNN_*.sql`.
 
 ## Tests
 
 `npm test -w server` runs unit tests. Integration tests (HTTP + real MySQL) also run
-when `TEST_DATABASE_URL` is set; the database it names must end in `_test` and is
-dropped and recreated on each run.
+when `TEST_DATABASE_URL` is set: each integration file gets its own database
+`<name>_<suffix>` (dropped and recreated each run) via `testing/testApp.js`, which also
+seeds a super admin and creates libraries with signed-in owners.

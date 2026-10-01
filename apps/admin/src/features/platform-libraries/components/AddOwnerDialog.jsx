@@ -1,65 +1,41 @@
-import { useState } from "react";
 import { addOwnerSchema } from "@app/shared/validation";
-import { Alert, Button, Dialog, TextField } from "@app/shared/ui";
-import { applyServerErrors, useSchemaForm } from "../../../app/forms.js";
+import { TextField } from "@app/shared/ui";
+import { useDialogForm } from "../../../app/forms.js";
+import { FormDialog } from "../../../app/FormDialog.jsx";
 import { useAddOwner } from "../api.js";
-
-const EMPTY = { name: "", email: "", password: "" };
 
 export function AddOwnerDialog({ libraryId, open, onClose }) {
   const addOwner = useAddOwner(libraryId);
-  const form = useSchemaForm(addOwnerSchema, EMPTY);
-  const [formError, setFormError] = useState("");
-  const { errors } = form.formState;
-
-  const close = () => {
-    form.reset(EMPTY);
-    setFormError("");
-    onClose();
-  };
-
-  const onSubmit = form.handleSubmit(async (values) => {
-    setFormError("");
-    try {
-      await addOwner.mutateAsync(values);
-      close();
-    } catch (error) {
-      setFormError(applyServerErrors(form, error));
-    }
+  const { form, errors, formError, onSubmit } = useDialogForm(addOwnerSchema, {
+    open,
+    onClose,
+    defaultValues: { name: "", email: "", password: "" },
+    submit: (values) => addOwner.mutateAsync(values),
   });
 
   return (
-    <Dialog
+    <FormDialog
       open={open}
-      onClose={close}
+      onClose={onClose}
       title="Add owner login"
-      footer={
-        <>
-          <Button variant="secondary" onClick={close}>
-            Cancel
-          </Button>
-          <Button type="submit" form="add-owner" busy={addOwner.isPending}>
-            Add owner
-          </Button>
-        </>
-      }
+      submitLabel="Add owner"
+      busy={addOwner.isPending}
+      formError={formError}
+      onSubmit={onSubmit}
     >
-      <form id="add-owner" onSubmit={onSubmit} className="flex flex-col gap-3" noValidate>
-        <Alert tone="error">{formError}</Alert>
-        <TextField label="Name" error={errors.name?.message} {...form.register("name")} />
-        <TextField
-          label="Email"
-          type="email"
-          error={errors.email?.message}
-          {...form.register("email")}
-        />
-        <TextField
-          label="Temporary password"
-          autoComplete="off"
-          error={errors.password?.message}
-          {...form.register("password")}
-        />
-      </form>
-    </Dialog>
+      <TextField label="Name" error={errors.name?.message} {...form.register("name")} />
+      <TextField
+        label="Email"
+        type="email"
+        error={errors.email?.message}
+        {...form.register("email")}
+      />
+      <TextField
+        label="Temporary password"
+        autoComplete="off"
+        error={errors.password?.message}
+        {...form.register("password")}
+      />
+    </FormDialog>
   );
 }

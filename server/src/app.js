@@ -3,6 +3,7 @@ import { apiNotFound, errorHandler } from "./http/errorHandler.js";
 import { noStore, requireAppHeader, securityHeaders } from "./middleware/requestGuards.js";
 import { createApiRouter } from "./routes.js";
 import { serveApps } from "./static/serveApps.js";
+import { serveFiles } from "./static/serveFiles.js";
 
 /**
  * Builds the Express app. Middleware order is decided here and nowhere else.
@@ -18,6 +19,7 @@ export function createApp({ db, config }) {
   app.use(securityHeaders);
   const { router, services } = createApiRouter({ db, config });
   app.use("/api", noStore, express.json({ limit: "1mb" }), requireAppHeader, router, apiNotFound);
+  serveFiles(app, config.storageDir);
   serveApps(app);
   app.use(errorHandler);
   return { app, services };

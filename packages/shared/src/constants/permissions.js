@@ -23,6 +23,23 @@ export const PERMISSIONS = Object.freeze({
 
 export const ALL_PERMISSIONS = Object.freeze(Object.values(PERMISSIONS));
 
+/** What the owner sees next to each checkbox on the Staff screen. */
+export const PERMISSION_LABELS = Object.freeze({
+  [PERMISSIONS.MEMBERS_MANAGE]: "Add and edit members",
+  [PERMISSIONS.SEATS_ALLOCATE]: "Allocate, change and release seats",
+  [PERMISSIONS.PAYMENTS_COLLECT]: "Collect payments",
+  [PERMISSIONS.PAYMENTS_VOID]: "Void payments and refund deposits",
+  [PERMISSIONS.EXPENSES_MANAGE]: "Record expenses",
+  [PERMISSIONS.ATTENDANCE_MANAGE]: "Mark attendance",
+  [PERMISSIONS.LAYOUT_MANAGE]: "Edit halls, tables and seats",
+  [PERMISSIONS.SLOTS_MANAGE]: "Edit time slots and fees",
+  [PERMISSIONS.NOTIFICATIONS_SEND]: "Send notifications",
+  [PERMISSIONS.INSIGHTS_VIEW]: "View insights and exports",
+  [PERMISSIONS.MOCKTESTS_VIEW]: "View mock-test sales",
+  [PERMISSIONS.SETTINGS_MANAGE]: "Change library settings",
+  [PERMISSIONS.STAFF_MANAGE]: "Manage staff logins",
+});
+
 export const DEFAULT_STAFF_PERMISSIONS = Object.freeze([
   PERMISSIONS.MEMBERS_MANAGE,
   PERMISSIONS.SEATS_ALLOCATE,

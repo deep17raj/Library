@@ -3,7 +3,7 @@ import { displayDateTime } from "@app/shared/time";
 import { Alert, Button, Card } from "@app/shared/ui";
 import { useSetLibraryStatus } from "../api.js";
 import { EditLibraryDialog } from "./EditLibraryDialog.jsx";
-import { StatusBadge } from "./StatusBadge.jsx";
+import { StatusBadge } from "../../../app/StatusBadge.jsx";
 
 /** Status, revenue share and usage of one library, with suspend/activate and edit. */
 export function LibrarySummaryCard({ library }) {

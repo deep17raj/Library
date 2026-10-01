@@ -1158,14 +1158,16 @@ Lists support `?page=&pageSize=&q=`. Legend: **P** = public, **SA** = super_admi
 **Library admin** (`/admin/*`; tenant from session, or `X-Library-Id` for SA)
 | Method | Path | Who |
 |---|---|---|
-| GET, PUT | /admin/settings | A, S:settings.manage |
-| POST | /admin/settings/logo (multipart) | A, S:settings.manage |
-| GET, POST | /admin/staff · PATCH /admin/staff/:id | A, S:staff.manage |
-| GET, POST | /admin/seat-categories · PATCH /admin/seat-categories/:id | S:layout.manage |
-| GET, POST | /admin/halls · PATCH, DELETE /admin/halls/:id (incl. seating mode) | S:layout.manage |
-| POST | /admin/halls/:id/tables/bulk `{tables: N, seatsPerTable: M, labelPattern}` | S:layout.manage |
-| PATCH, DELETE | /admin/tables/:id · /admin/seats/:id (rename, features, disable) | S:layout.manage |
-| GET | /admin/layout (halls → tables → seats) | any staff |
+| GET | /admin/settings (name, timezone, brand, prefixes, logo URL) | any staff |
+| PUT | /admin/settings | S:settings.manage |
+| POST, DELETE | /admin/settings/logo (multipart field `logo`, ≤ 2 MB) | S:settings.manage |
+| GET, POST | /admin/staff · PATCH /admin/staff/:id · POST /admin/staff/:id/password | S:staff.manage |
+| GET | /admin/layout (categories + halls → tables → seats; every layout write returns it) | any staff |
+| POST | /admin/seat-categories · PATCH /admin/seat-categories/:id (archive) | S:layout.manage |
+| POST | /admin/halls · PATCH, DELETE /admin/halls/:id (incl. seating mode) | S:layout.manage |
+| POST | /admin/halls/:id/tables `{tableCount, seatsPerTable, seatPrefix, startNumber}` | S:layout.manage |
+| PATCH, DELETE | /admin/tables/:id · POST /admin/tables/:id/seats | S:layout.manage |
+| PATCH, DELETE | /admin/seats/:id (label, category, features, disable) | S:layout.manage |
 | GET | /admin/seat-map?hallId=&slotId= | any staff |
 | GET | /admin/seats/available?slotId=&features= | S:seats.allocate |
 | GET | /admin/seats/:id (current occupants per slot, history) | any staff |
@@ -1218,7 +1220,7 @@ Lists support `?page=&pageSize=&q=`. Legend: **P** = public, **SA** = super_admi
 | GET | /s/:slug/tests/:id/leaderboard?scope=all\|library | ST |
 
 **Static (not /api):** `/admin/*`, `/s/:slug/*` (shell with injected manifest),
-`/s/:slug/manifest.webmanifest`, `/sw.js`, `/files/*` (public images),
+`/s/:slug/manifest.webmanifest`, `/sw.js`, `/files/*` (public uploads from `storage/public`, served with a 1-year cache; `storage/private` is never served statically),
 `/.well-known/assetlinks.json`.
 
 ## 12. Screens

@@ -14,3 +14,7 @@ Format: **date — area — what — why it was accepted — how to pay it off.*
 - **2026-10-01 — floating halls** — capacity ("≤ N students per slot cell") is enforced
   only by the service under a hall row lock; MySQL can't express a count limit as a
   constraint. All writes must go through `subscriptions.service`.
+- **2026-10-01 — super admin inside a library** — the API accepts `X-Library-Id` from a
+  super admin (`middleware/libraryContext.js`, tested), but the admin app has no
+  "open as library" switch yet. Add a library picker on the Libraries page that sets
+  the header in the API client.
