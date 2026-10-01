@@ -1,39 +1,52 @@
 import { useState } from "react";
 import { useFieldArray } from "react-hook-form";
-import { useLocation, useNavigate } from "react-router-dom";
-import { localDateOf } from "@app/shared/time";
-import { createMemberSchema } from "@app/shared/validation";
-import { Alert, Button, Card, PageHeader, TextField } from "@app/shared/ui";
+import { Link, useLocation, useNavigate } from "react-router-dom";
+import { memberFormSchema } from "@app/shared/validation";
+import {
+  Alert,
+  Button,
+  IconButton,
+  MoneyField,
+  PageHeader,
+  SectionCard,
+  TextField,
+  useToast,
+} from "@app/shared/ui";
 import { applyServerErrors, useSchemaForm } from "../../app/forms.js";
-import { useLibrarySettings } from "../settings/api.js";
+import { ICONS } from "../../app/icons.js";
+import { useToday } from "../../app/useToday.js";
 import { BookingFields } from "../seating/components/BookingFields.jsx";
 import { useCreateMember, useUploadIdProof, useUploadPhoto } from "./api.js";
 import { MemberProfileFields } from "./components/MemberProfileFields.jsx";
 import { FilePick } from "./components/FilePick.jsx";
 
-const EMPTY_BOOKING = { slotId: "", planId: "" };
+const EMPTY_BOOKING = { slotId: "", planId: "", lockerFee: "" };
 
 /**
- * Add a member with their seat bookings in one save. Can be opened pre-filled from the
- * seat map (a seat + slot) or the waitlist (name, phone, slot, entry to convert).
+ * Add a member with their seat bookings and joining charges in one save (a page, not a
+ * dialog: UI-GUIDE §10). Can open pre-filled from the seat map (seat + slot) or the
+ * waitlist (name, phone, slot, entry to convert).
  */
 export function NewMemberPage() {
   const prefill = useLocation().state ?? {};
   const navigate = useNavigate();
-  const { data: settings } = useLibrarySettings();
+  const toast = useToast();
+  const today = useToday();
   const create = useCreateMember();
   const uploadPhoto = useUploadPhoto();
   const uploadIdProof = useUploadIdProof();
   const [files, setFiles] = useState({ photo: null, idProof: null });
   const [formError, setFormError] = useState("");
 
-  const form = useSchemaForm(createMemberSchema, {
+  const form = useSchemaForm(memberFormSchema, {
     name: prefill.name ?? "",
     phone: prefill.phone ?? "",
     address: "",
     examTarget: "",
     notes: "",
-    joinedOn: localDateOf(new Date(), settings?.timezone),
+    joinedOn: today,
+    admissionFee: "",
+    deposit: "",
     bookings: prefill.slotId
       ? [
           {
@@ -58,7 +71,8 @@ export function NewMemberPage() {
         await uploadPhoto.mutateAsync({ id: member.id, file: files.photo }).catch(() => {});
       if (files.idProof)
         await uploadIdProof.mutateAsync({ id: member.id, file: files.idProof }).catch(() => {});
-      navigate(`/members/${member.id}`, { replace: true });
+      toast(`${member.name} added as ${member.memberCode}`);
+      navigate(`/members/${member.id}`, { replace: true, state: { collect: true } });
     } catch (error) {
       setFormError(applyServerErrors(form, error));
     }
@@ -67,68 +81,102 @@ export function NewMemberPage() {
   return (
     <div className="max-w-3xl">
       <PageHeader
+        back={
+          <Link to="/members" className="text-sm text-brand-dark hover:underline">
+            ← Members
+          </Link>
+        }
+        icon={ICONS.addMember}
         title="Add member"
-        description={prefill.name ? `From the waitlist: ${prefill.name}` : undefined}
+        description={
+          prefill.name
+            ? `From the waitlist: ${prefill.name}`
+            : "Student details, their seat and slot, and any joining charges."
+        }
       />
       <form onSubmit={onSubmit} className="flex flex-col gap-6" noValidate>
         <Alert tone="error">{formError}</Alert>
-        <Card className="flex flex-col gap-4">
-          <h2 className="font-semibold">Student</h2>
-          <MemberProfileFields form={form} errors={errors} />
-          <div className="grid gap-3 sm:grid-cols-3">
-            <TextField
-              label="Joining date"
-              type="date"
-              error={errors.joinedOn?.message}
-              {...form.register("joinedOn")}
-            />
-            <FilePick label="Photo" onPick={(photo) => setFiles({ ...files, photo })} />
-            <FilePick
-              label="ID proof (optional)"
-              onPick={(idProof) => setFiles({ ...files, idProof })}
-            />
-          </div>
-        </Card>
-
-        <Card className="flex flex-col gap-4">
-          <h2 className="font-semibold">Seat bookings</h2>
-          {bookings.fields.map((booking, index) => (
-            <div key={booking.id} className="rounded-lg p-3 ring-1 ring-slate-200">
-              <div className="mb-2 flex items-center justify-between">
-                <span className="text-sm font-medium">Booking {index + 1}</span>
-                <Button
-                  variant="ghost"
-                  className="px-2 py-1 text-xs"
-                  onClick={() => bookings.remove(index)}
-                >
-                  Remove
-                </Button>
-              </div>
-              <BookingFields
-                form={form}
-                prefix={`bookings.${index}.`}
-                errors={errors.bookings?.[index]}
+        <SectionCard icon={ICONS.member} title="Student">
+          <div className="flex flex-col gap-4">
+            <MemberProfileFields form={form} errors={errors} />
+            <div className="grid gap-3 sm:grid-cols-3">
+              <TextField
+                label="Joining date"
+                type="date"
+                error={errors.joinedOn?.message}
+                {...form.register("joinedOn")}
+              />
+              <FilePick label="Photo" onPick={(photo) => setFiles({ ...files, photo })} />
+              <FilePick
+                label="ID proof (optional)"
+                onPick={(idProof) => setFiles({ ...files, idProof })}
               />
             </div>
-          ))}
-          <div>
-            <Button
-              variant="secondary"
-              onClick={() => bookings.append(EMPTY_BOOKING)}
-              disabled={bookings.fields.length >= 4}
-            >
-              + Add a slot and seat
-            </Button>
-            <p className="mt-1 text-xs text-slate-500">
-              A student can have several slots (e.g. Morning and Night) as long as they don&apos;t
-              overlap.
-            </p>
           </div>
-        </Card>
+        </SectionCard>
+
+        <SectionCard
+          icon={ICONS.seatMap}
+          title="Seat bookings"
+          description="A student can have several slots (e.g. Morning and Night) as long as they don't overlap."
+        >
+          <div className="flex flex-col gap-4">
+            {bookings.fields.map((booking, index) => (
+              <div key={booking.id} className="rounded-xl p-4 ring-1 ring-slate-200">
+                <div className="mb-3 flex items-center justify-between">
+                  <span className="text-sm font-medium text-slate-700">Booking {index + 1}</span>
+                  <IconButton
+                    icon={ICONS.delete}
+                    variant="danger-ghost"
+                    label={`Remove booking ${index + 1}`}
+                    onClick={() => bookings.remove(index)}
+                  />
+                </div>
+                <BookingFields
+                  form={form}
+                  prefix={`bookings.${index}.`}
+                  errors={errors.bookings?.[index]}
+                  showLockerFee
+                />
+              </div>
+            ))}
+            <div>
+              <Button
+                variant="subtle"
+                icon={ICONS.add}
+                onClick={() => bookings.append(EMPTY_BOOKING)}
+                disabled={bookings.fields.length >= 4}
+              >
+                Add a slot and seat
+              </Button>
+            </div>
+          </div>
+        </SectionCard>
+
+        <SectionCard
+          icon={ICONS.payment}
+          title="Joining charges"
+          description="Charged once today. Leave empty if you don't charge them."
+        >
+          <div className="grid gap-3 sm:grid-cols-2">
+            <MoneyField
+              label="Admission fee"
+              error={errors.admissionFee?.message}
+              {...form.register("admissionFee")}
+            />
+            <MoneyField
+              label="Security deposit"
+              hint="Refundable — shown separately from income."
+              error={errors.deposit?.message}
+              {...form.register("deposit")}
+            />
+          </div>
+        </SectionCard>
 
         <div className="flex gap-2">
           <Button
             type="submit"
+            icon={ICONS.addMember}
             busy={create.isPending || uploadPhoto.isPending || uploadIdProof.isPending}
           >
             Save member
@@ -137,6 +185,9 @@ export function NewMemberPage() {
             Cancel
           </Button>
         </div>
+        <p className="text-xs text-slate-500">
+          After saving you can collect the first payment straight away.
+        </p>
       </form>
     </div>
   );

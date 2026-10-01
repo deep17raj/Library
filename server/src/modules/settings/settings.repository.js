@@ -14,6 +14,13 @@ function toSettings(row) {
     brandColor: theme.brandColor || DEFAULT_BRAND_COLOR,
     receiptPrefix: row.receipt_prefix,
     memberCodePrefix: row.member_code_prefix,
+    billing: {
+      billingAnchor: row.billing_anchor,
+      firstPeriodBilling: row.first_period_billing,
+      defaultCollection: row.default_collection,
+      graceDays: row.grace_days,
+      autoReleaseUnpaid: Boolean(row.auto_release_unpaid),
+    },
   };
 }
 
@@ -50,4 +57,23 @@ export async function setLogoPath(db, tenantId, logoPath) {
     logoPath,
     tenantId,
   ]);
+}
+
+/** @param {import("@app/shared/validation").billingSettingsSchema["_output"]} values */
+export async function updateBilling(db, tenantId, values) {
+  await execute(
+    db,
+    `UPDATE library_settings
+        SET billing_anchor = ?, first_period_billing = ?, default_collection = ?, grace_days = ?,
+            auto_release_unpaid = ?
+      WHERE tenant_id = ?`,
+    [
+      values.billingAnchor,
+      values.firstPeriodBilling,
+      values.defaultCollection,
+      values.graceDays,
+      values.autoReleaseUnpaid ? 1 : 0,
+      tenantId,
+    ],
+  );
 }

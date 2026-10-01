@@ -8,6 +8,7 @@ import { FloatingHallView } from "./components/FloatingHallView.jsx";
 import { SeatGrid } from "./components/SeatGrid.jsx";
 import { SeatPanel } from "./components/SeatPanel.jsx";
 import { SlotFilter } from "./components/SlotFilter.jsx";
+import { ICONS } from "../../app/icons.js";
 
 /** Who sits where: one hall at a time, filtered to a slot (or the whole day). */
 export function SeatMapPage() {
@@ -26,12 +27,17 @@ export function SeatMapPage() {
 
   if (layout && halls.length === 0) {
     return (
-      <EmptyState title="No halls yet" description="Build your layout under Halls & seats first." />
+      <EmptyState
+        icon={ICONS.seatMap}
+        title="No halls yet"
+        description="Build your layout under Halls & seats first."
+      />
     );
   }
   return (
     <>
       <PageHeader
+        icon={ICONS.seatMap}
         title="Seat map"
         description="Pick a slot to see which seats are free at that time."
       />

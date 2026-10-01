@@ -42,8 +42,19 @@ DB_NAME=cpuser_library
 JWT_SECRET=<48+ random characters>
 SUPER_ADMIN_EMAIL=you@example.com
 SUPER_ADMIN_PASSWORD=<strong password, change it in the app after first login>
+CRON_SECRET=<32+ random characters>
 ```
 Do **not** set `PORT` (Passenger provides it).
+
+## 4b. Cron (cPanel → Cron Jobs)
+
+Passenger puts an idle app to sleep, so the background jobs (monthly fee invoices
+since milestone 5) need a nudge. Add a cron job **every 15 minutes**:
+```
+curl -fsS -X POST -H "X-Cron-Secret: <CRON_SECRET>" https://library.example.com/api/internal/jobs/run > /dev/null
+```
+Each job still runs at most once per its interval (recorded in `job_runs`), so calling
+more often is harmless. Without `CRON_SECRET` the endpoint refuses every call.
 
 ## 5. Setup Node.js App
 

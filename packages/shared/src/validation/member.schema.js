@@ -1,6 +1,7 @@
 import { z } from "zod";
 import { ALL_SEAT_FEATURES } from "../constants/seatFeatures.js";
 import { dateKeyField, idField, nameField, paiseField, phoneField } from "./common.js";
+import { optionalRupeesField } from "./money.schema.js";
 
 const requiredPhone = phoneField.refine((digits) => digits !== "", "Mobile number is required");
 const optionalText = (max, label) => z.string().trim().max(max, `${label} is too long`);
@@ -13,30 +14,61 @@ const profileShape = {
   notes: optionalText(500, "Notes").default(""),
 };
 
-/** One seat booking on the add-member form: slot, plan, and a seat or sit-anywhere hall. */
-export const bookingSchema = z
-  .object({
-    slotId: idField,
-    planId: idField,
-    seatId: idField.optional(),
-    hallId: idField.optional(),
-    lockerFeePaise: paiseField.default(0),
-  })
-  .refine((booking) => Boolean(booking.seatId) !== Boolean(booking.hallId), {
-    path: ["seatId"],
-    message: "Choose a seat, or a sit-anywhere hall",
-  });
+const placeShape = {
+  slotId: idField,
+  planId: idField,
+  seatId: idField.optional(),
+  hallId: idField.optional(),
+};
+const onePlace = [
+  (booking) => Boolean(booking.seatId) !== Boolean(booking.hallId),
+  { path: ["seatId"], message: "Choose a seat, or a sit-anywhere hall" },
+];
 
-/**
- * A new member with their seat bookings, saved together. No bookings is allowed
- * (e.g. someone joining later). `waitlistEntryId` marks that waitlist entry converted.
- */
-export const createMemberSchema = z.object({
+/** One seat booking: slot, plan, a seat or sit-anywhere hall, optional locker fee. */
+export const bookingSchema = z
+  .object({ ...placeShape, lockerFeePaise: paiseField.default(0) })
+  .refine(...onePlace);
+
+const joiningShape = {
   ...profileShape,
   joinedOn: dateKeyField.optional(),
-  bookings: z.array(bookingSchema).max(4, "At most 4 bookings at once").default([]),
   waitlistEntryId: idField.optional(),
+};
+
+/**
+ * A new member with their seat bookings and joining charges, saved together. No
+ * bookings is allowed (e.g. someone joining later). `waitlistEntryId` marks that
+ * waitlist entry converted.
+ */
+export const createMemberSchema = z.object({
+  ...joiningShape,
+  bookings: z.array(bookingSchema).max(4, "At most 4 bookings at once").default([]),
+  admissionFeePaise: paiseField.default(0),
+  depositPaise: paiseField.default(0),
 });
+
+/** The add-member form: money typed in rupees (empty = none), sent as createMemberSchema. */
+export const memberFormSchema = z
+  .object({
+    ...joiningShape,
+    bookings: z
+      .array(
+        z
+          .object({ ...placeShape, lockerFee: optionalRupeesField.default("") })
+          .refine(...onePlace)
+          .transform(({ lockerFee, ...booking }) => ({ ...booking, lockerFeePaise: lockerFee })),
+      )
+      .max(4, "At most 4 bookings at once")
+      .default([]),
+    admissionFee: optionalRupeesField.default(""),
+    deposit: optionalRupeesField.default(""),
+  })
+  .transform(({ admissionFee, deposit, ...member }) => ({
+    ...member,
+    admissionFeePaise: admissionFee,
+    depositPaise: deposit,
+  }));
 
 export const updateMemberSchema = z.object({
   name: profileShape.name.optional(),

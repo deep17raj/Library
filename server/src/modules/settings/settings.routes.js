@@ -5,7 +5,12 @@ import { validateBody } from "../../http/validate.js";
 import { requirePermission } from "../../middleware/libraryContext.js";
 import { requireFile, singleImageUpload } from "../../middleware/upload.js";
 import { createSettingsController } from "./settings.controller.js";
-import { librarySettingsSchema, LOGO_FIELD, LOGO_MAX_BYTES } from "./settings.validation.js";
+import {
+  billingSettingsSchema,
+  librarySettingsSchema,
+  LOGO_FIELD,
+  LOGO_MAX_BYTES,
+} from "./settings.validation.js";
 
 /** Mounted at /api/admin/settings (library context already resolved). */
 export function createSettingsRouter({ settingsService }) {
@@ -20,6 +25,12 @@ export function createSettingsRouter({ settingsService }) {
     canManage,
     validateBody(librarySettingsSchema),
     asyncHandler(controller.putSettings),
+  );
+  router.put(
+    "/billing",
+    canManage,
+    validateBody(billingSettingsSchema),
+    asyncHandler(controller.putBilling),
   );
   router.post(
     "/logo",

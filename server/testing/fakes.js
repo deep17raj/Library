@@ -80,6 +80,7 @@ export function testConfig(overrides = {}) {
     appBaseUrl: "",
     trustProxy: false,
     storageDir: "",
+    cronSecret: "test-cron-secret",
     db: {},
     auth: {
       jwtSecret: "test-secret-that-is-long-enough-for-hs256",

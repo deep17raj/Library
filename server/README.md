@@ -7,14 +7,17 @@ Express API + static hosting for the two apps. Entry: `src/main.js` (via the roo
 src/
   main.js        boot: config → migrations → pool → app → super-admin seed → listen
   app.js         Express app; the only place middleware order is decided
-  routes.js      builds every service once and mounts every module router
+  services.js    builds every service once; cross-module wiring (billing → members, …) is here
+  routes.js      mounts every module router; each router receives the whole `services`
   config/        env.js — reads .env once; nothing else touches process.env
   db/            pool, withTransaction/queryOne/queryAll/execute, buildPatch, migration runner
   migrations/    NNN_name.sql, applied once each in order (schema_migrations)
   http/          AppError, errorHandler (API error format), asyncHandler, validateBody
   middleware/    staffAuth, libraryContext (req.ctx + requirePermission), upload (multer),
                  failureThrottle (rate limits), requestGuards (CSRF, headers)
-  lib/           jwt, password, cookies, images (sharp re-encode), bindDeps
+  lib/           jwt, password, cookies, images (sharp re-encode), bindDeps, csv (export)
+  jobs/          scheduler (job_runs, once per interval), jobs.js (the job list),
+                 internal.routes.js (POST /api/internal/jobs/run, X-Cron-Secret)
   static/        serves apps/admin/dist at /admin and storage/public at /files
   modules/       one folder per feature (see each README.md)
 testing/         fakes for unit tests, MySQL helpers + integration tests
@@ -27,7 +30,7 @@ testing/         fakes for unit tests, MySQL helpers + integration tests
 2. Service: small module-level functions that take `deps` first, exported through
    `create<Name>Service(deps)` with `bindDeps` — tests pass fake repositories as deps.
 3. Repository functions take `(db, tenantId, …)`; `db` is the pool or a transaction.
-4. Mount the router in `routes.js` — library features go under `createAdminRouter`, which
+4. Build the service in `services.js` and mount the router in `routes.js` — library features go under `createAdminRouter`, which
    already applies `requireStaff` + `requireLibrary` (so `req.ctx.tenantId` is set); guard
    each route with `requirePermission(...)`. Add tables in a new `migrations/NNN_*.sql`.
 

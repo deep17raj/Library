@@ -19,12 +19,18 @@ Format: **date — area — what — why it was accepted — how to pay it off.*
   "open as library" switch yet. Add a library picker on the Libraries page that sets
   the header in the API client.
 - **2026-10-01 — ending on a future date** — `POST /subscriptions/:id/end` ends today.
-  Planned end dates (`end_on` in the future, package expiry) need the job scheduler
-  from milestone 5, which will end due subscriptions and free their seats.
+  Planned end dates (`end_on` in the future, package expiry) need a job; the scheduler
+  exists since milestone 5, the `endFinishedSubscriptions` job comes in milestone 8.
 
 - **2026-10-01 — ID proofs are images only** — uploads are re-encoded with sharp, which
   can't read PDFs. Accept PDFs later by validating the PDF header and storing as-is in
   private storage.
-- **2026-10-01 — locker fee not on the member form** — the API accepts
-  `lockerFeePaise` per booking, but the form leaves it at 0 until billing (milestone 5)
-  shows what it charges.
+- **2026-10-01 — auto-release of unpaid seats** — `library_settings.auto_release_unpaid`
+  and `grace_days` are stored (grace days editable in Settings → Billing rules), but
+  nothing releases seats yet; the toggle is hidden. The `releaseUnpaidSeats` job and
+  its notifications come with milestone 8.
+- **2026-10-01 — receipts print from the browser** — no PDF file is generated; the
+  receipt page uses print CSS. Fine for counters with a printer or "Save as PDF";
+  add server-side PDF only if libraries ask to send receipts on WhatsApp.
+- **2026-10-01 — manual charges have no edit** — a wrong "other" charge is voided
+  (unpaid) and re-added; editing amounts would complicate the audit trail.

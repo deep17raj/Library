@@ -9,6 +9,7 @@ import { useSeatHistory } from "../../seating/api.js";
 import { MoveDialog } from "../../seating/components/BookingDialogs.jsx";
 import { EndBookingDialog } from "../../seating/components/EndBookingDialog.jsx";
 import { SwapDialog } from "../../seating/components/SwapDialog.jsx";
+import { ICONS } from "../../../app/icons.js";
 
 /** The booking shape the seating dialogs need, built from a seat-map occupant. */
 function asBooking(occupant, seat, hall) {
@@ -87,6 +88,7 @@ export function SeatPanel({ seat, hall, slot, onClose }) {
             onClick={() =>
               navigate("/members/new", { state: { slotId: slot.id, seatId: seat.id } })
             }
+            icon={ICONS.addMember}
           >
             Add a new member here for {slot.name}
           </Button>

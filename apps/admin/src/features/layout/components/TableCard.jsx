@@ -1,10 +1,11 @@
 import { useState } from "react";
 import { SEAT_FEATURE_LABELS } from "@app/shared/constants";
-import { Alert, Button, Card, cx } from "@app/shared/ui";
+import { Alert, Button, Card, cx, useConfirm } from "@app/shared/ui";
 import { useLayoutAction } from "../api.js";
 import { AddSeatsDialog } from "./AddSeatsDialog.jsx";
 import { RenameTableDialog } from "./RenameTableDialog.jsx";
 import { SeatDialog } from "./SeatDialog.jsx";
+import { ICONS } from "../../../app/icons.js";
 
 /** A table with its seat chips; clicking a seat opens its editor. */
 export function TableCard({ table, hall, layout, canEdit }) {
@@ -12,10 +13,14 @@ export function TableCard({ table, hall, layout, canEdit }) {
   const remove = useLayoutAction("deleteTable");
   const close = () => setDialog(null);
 
-  const onDelete = () => {
-    if (window.confirm(`Delete ${table.label} and its ${table.seats.length} seats?`)) {
-      remove.mutate({ id: table.id });
-    }
+  const confirm = useConfirm();
+  const onDelete = async () => {
+    const ok = await confirm({
+      title: `Delete ${table.label}?`,
+      message: `Its ${table.seats.length} seats are removed too.`,
+      confirmLabel: "Delete table",
+    });
+    if (ok) remove.mutate({ id: table.id });
   };
 
   return (
@@ -28,8 +33,9 @@ export function TableCard({ table, hall, layout, canEdit }) {
               variant="ghost"
               className="px-2 py-1"
               onClick={() => setDialog({ kind: "seats" })}
+              icon={ICONS.add}
             >
-              + Seats
+              Seats
             </Button>
             <Button
               variant="ghost"

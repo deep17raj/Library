@@ -33,3 +33,17 @@ test("list query defaults and limits", () => {
   assert.equal(memberListQuerySchema.safeParse({ pageSize: "500" }).success, false);
   assert.equal(updateMemberSchema.safeParse({ status: "gone" }).success, false);
 });
+
+test("the add-member form turns rupees into paise and empty into none", async () => {
+  const { memberFormSchema } = await import("./index.js");
+  const parsed = memberFormSchema.parse({
+    name: "Asha Rao",
+    phone: "9876543210",
+    admissionFee: "500",
+    deposit: "",
+    bookings: [{ slotId: ID, planId: ID, seatId: ID, lockerFee: "100" }],
+  });
+  assert.equal(parsed.admissionFeePaise, 50000);
+  assert.equal(parsed.depositPaise, 0);
+  assert.equal(parsed.bookings[0].lockerFeePaise, 10000);
+});

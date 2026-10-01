@@ -3,6 +3,7 @@ import { changePasswordSchema } from "@app/shared/validation";
 import { Alert, Button, Card, PageHeader, TextField } from "@app/shared/ui";
 import { applyServerErrors, useSchemaForm } from "../../app/forms.js";
 import { useChangePassword } from "./api.js";
+import { ICONS } from "../../app/icons.js";
 
 export function ChangePasswordPage() {
   const changePassword = useChangePassword();
@@ -26,7 +27,7 @@ export function ChangePasswordPage() {
 
   return (
     <div className="max-w-md">
-      <PageHeader title="Change password" />
+      <PageHeader icon={ICONS.password} title="Change password" />
       <Card>
         <form onSubmit={onSubmit} className="flex flex-col gap-4" noValidate>
           <Alert tone={message.tone}>{message.text}</Alert>

@@ -66,6 +66,19 @@ Server state via TanStack Query hooks inside the feature; no app-wide data store
 - All business data lives on the server (no business data in `localStorage`).
 - Never hard-delete money or history: void payments, end allocations/subscriptions.
 
+## UI — ALWAYS follow docs/UI-GUIDE.md
+
+- Every screen passes the checklist in `docs/UI-GUIDE.md` §9: page header with the
+  concept's icon + one-line description, one primary action, teaching empty state,
+  loading/error states, success toast after saves, `useConfirm` (never
+  `window.confirm`) for destructive actions, money/dates via shared helpers.
+- Icons come from lucide-react via the icon dictionary (`apps/admin/src/app/icons.js`);
+  one concept = one icon = one word everywhere. Screens say "booking", not "subscription".
+- Use the shared components (`@app/shared/ui`) instead of one-off markup; add a new
+  shared component (and a line in UI-GUIDE §5) rather than styling the same thing twice.
+- New screens follow the notes in UI-GUIDE §10–11; update those notes when a screen's
+  design decisions change.
+
 ## Refactoring — ALWAYS
 
 - After finishing each milestone, do a refactor pass before starting the next:

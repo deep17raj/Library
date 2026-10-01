@@ -4,6 +4,9 @@ export default {
   content: ["./index.html", "./src/**/*.{js,jsx}", "../../packages/shared/src/ui/**/*.{js,jsx}"],
   theme: {
     extend: {
+      fontFamily: {
+        sans: ["'Inter Variable'", "Inter", "system-ui", "-apple-system", "Segoe UI", "sans-serif"],
+      },
       colors: {
         // Library branding (milestone 2) overrides these CSS variables at runtime.
         brand: {

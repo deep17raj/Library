@@ -35,6 +35,7 @@ export function createMembersService({
   db,
   storageDir,
   seating,
+  billing,
   repo = membersRepository,
   occupancy = {
     listActivePlacementsOfMembers: subscriptionsRepository.listActivePlacementsOfMembers,
@@ -46,7 +47,18 @@ export function createMembersService({
   audit = { recordAudit },
   files = { saveImage, deleteStoredFile },
 }) {
-  const deps = { db, storageDir, seating, repo, occupancy, waitlist, library, audit, files };
+  const deps = {
+    db,
+    storageDir,
+    seating,
+    billing,
+    repo,
+    occupancy,
+    waitlist,
+    library,
+    audit,
+    files,
+  };
   return bindDeps(deps, {
     listMembers,
     getMember,
@@ -107,7 +119,11 @@ async function getMember(deps, ctx, id) {
  * is saved and the error points at that booking ("bookings.1.seatId").
  * @param {MembersDeps} deps
  */
-async function createMember(deps, ctx, { bookings, waitlistEntryId, ...profile }) {
+async function createMember(
+  deps,
+  ctx,
+  { bookings, waitlistEntryId, admissionFeePaise, depositPaise, ...profile },
+) {
   const existing = await deps.repo.findMemberByPhone(deps.db, ctx.tenantId, profile.phone);
   if (existing) throw phoneTaken(`${existing.name} (${existing.memberCode})`);
   const id = crypto.randomUUID();
@@ -118,6 +134,13 @@ async function createMember(deps, ctx, { bookings, waitlistEntryId, ...profile }
       const memberCode = `${prefix}${await takeNextNumber(tx, ctx.tenantId, "member_code", 1001)}`;
       await deps.repo.insertMember(tx, ctx.tenantId, { ...profile, id, memberCode, joinedOn });
       await seatBookings(deps, tx, ctx, id, bookings, joinedOn);
+      // Joining charges and the first fees exist as soon as the member does.
+      await deps.billing.createJoiningInvoices(tx, ctx, id, {
+        admissionFeePaise,
+        depositPaise,
+        joinedOn,
+      });
+      await deps.billing.syncMemberInvoices(tx, ctx, id);
       if (waitlistEntryId) await deps.waitlist.markConverted(tx, ctx.tenantId, waitlistEntryId, id);
       await deps.audit.recordAudit(
         tx,

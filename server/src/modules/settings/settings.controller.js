@@ -7,6 +7,9 @@ export function createSettingsController({ settingsService }) {
     async putSettings(req, res) {
       res.json({ settings: await settingsService.updateSettings(req.ctx, req.body) });
     },
+    async putBilling(req, res) {
+      res.json({ settings: await settingsService.updateBilling(req.ctx, req.body) });
+    },
     async postLogo(req, res) {
       res.json({ settings: await settingsService.replaceLogo(req.ctx, req.file.buffer) });
     },

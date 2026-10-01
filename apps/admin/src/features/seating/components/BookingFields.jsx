@@ -1,7 +1,7 @@
 import { useEffect } from "react";
 import { formatRupees } from "@app/shared/money";
 import { displaySlotTimes } from "@app/shared/slots";
-import { SelectField } from "@app/shared/ui";
+import { MoneyField, SelectField } from "@app/shared/ui";
 import { useLayout } from "../../layout/api.js";
 import { useSlots } from "../../slots/api.js";
 import { planLength } from "../../slots/slotDisplay.js";
@@ -12,9 +12,17 @@ import { PlacePicker } from "./PlacePicker.jsx";
  * Slot → plan → place, with a live price, bound to a react-hook-form form. `prefix`
  * is the field path ("bookings.0." in the add-member form, "" in dialogs).
  * @param {{ form: any, prefix?: string, errors?: Record<string, any>, keepSeatId?: string,
- *   fixedSlotId?: string }} props  fixedSlotId: slot can't be changed (move dialog)
+ *   fixedSlotId?: string, showLockerFee?: boolean }} props
+ *   fixedSlotId: slot can't be changed (move dialog); showLockerFee: rupee locker fee field
  */
-export function BookingFields({ form, prefix = "", errors = {}, keepSeatId, fixedSlotId }) {
+export function BookingFields({
+  form,
+  prefix = "",
+  errors = {},
+  keepSeatId,
+  fixedSlotId,
+  showLockerFee,
+}) {
   const { data: slots = [] } = useSlots();
   const { data: layout } = useLayout();
   const field = (name) => `${prefix}${name}`;
@@ -79,6 +87,15 @@ export function BookingFields({ form, prefix = "", errors = {}, keepSeatId, fixe
         keepSeatId={keepSeatId}
         error={errors.seatId?.message || errors.hallId?.message}
       />
+      {showLockerFee && (
+        <MoneyField
+          className="sm:max-w-xs"
+          label="Locker fee per period (optional)"
+          hint="Billed with each fee. Leave empty for no locker."
+          error={errors.lockerFee?.message}
+          {...form.register(field("lockerFee"))}
+        />
+      )}
       {price && (
         <p className="text-sm text-slate-700">
           Fee: <strong>{formatRupees(price.pricePaise)}</strong> per {planLength(plan)}

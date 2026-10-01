@@ -1,11 +1,12 @@
 import { useState } from "react";
 import { SEATING_MODES } from "@app/shared/constants";
 import { formatRupees } from "@app/shared/money";
-import { Alert, Badge, Button, Card, EmptyState } from "@app/shared/ui";
+import { Alert, Badge, Button, Card, EmptyState, useConfirm } from "@app/shared/ui";
 import { useLayoutAction } from "../api.js";
 import { AddTablesDialog } from "./AddTablesDialog.jsx";
 import { HallDialog } from "./HallDialog.jsx";
 import { TableCard } from "./TableCard.jsx";
+import { ICONS } from "../../../app/icons.js";
 
 /** One hall: its summary, actions and tables. */
 export function HallView({ hall, layout, canEdit }) {
@@ -14,14 +15,14 @@ export function HallView({ hall, layout, canEdit }) {
   const seats = hall.tables.flatMap((table) => table.seats);
   const activeSeats = seats.filter((seat) => seat.status === "active").length;
 
-  const onDelete = () => {
-    if (
-      window.confirm(
-        `Delete ${hall.name} with its ${hall.tables.length} tables and ${seats.length} seats?`,
-      )
-    ) {
-      remove.mutate({ id: hall.id });
-    }
+  const confirm = useConfirm();
+  const onDelete = async () => {
+    const ok = await confirm({
+      title: `Delete ${hall.name}?`,
+      message: `Its ${hall.tables.length} tables and ${seats.length} seats are removed. Seats that have ever been booked can't be deleted — disable them instead.`,
+      confirmLabel: "Delete hall",
+    });
+    if (ok) remove.mutate({ id: hall.id });
   };
 
   return (
@@ -43,7 +44,9 @@ export function HallView({ hall, layout, canEdit }) {
         </div>
         {canEdit && (
           <div className="flex flex-wrap gap-2">
-            <Button onClick={() => setDialog("tables")}>Add tables</Button>
+            <Button onClick={() => setDialog("tables")} icon={ICONS.add}>
+              Add tables
+            </Button>
             <Button variant="secondary" onClick={() => setDialog("edit")}>
               Edit hall
             </Button>
@@ -62,6 +65,7 @@ export function HallView({ hall, layout, canEdit }) {
 
       {hall.tables.length === 0 ? (
         <EmptyState
+          icon={ICONS.layout}
           title="No tables in this hall"
           description="Use “Add tables” to create tables with numbered seats."
         />

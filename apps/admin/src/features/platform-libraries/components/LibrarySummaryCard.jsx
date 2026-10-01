@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { displayDateTime } from "@app/shared/time";
-import { Alert, Button, Card } from "@app/shared/ui";
+import { Alert, Button, Card, useConfirm } from "@app/shared/ui";
 import { useSetLibraryStatus } from "../api.js";
 import { EditLibraryDialog } from "./EditLibraryDialog.jsx";
 import { StatusBadge } from "../../../app/StatusBadge.jsx";
@@ -11,11 +11,24 @@ export function LibrarySummaryCard({ library }) {
   const [editing, setEditing] = useState(false);
   const suspended = library.status === "suspended";
 
-  const toggleStatus = () => {
-    const question = suspended
-      ? `Reactivate ${library.name}? Its staff and students can sign in again.`
-      : `Suspend ${library.name}? Its owner, staff and students are signed out immediately.`;
-    if (window.confirm(question)) setStatus.mutate(suspended ? "active" : "suspended");
+  const confirm = useConfirm();
+  const toggleStatus = async () => {
+    const ok = await confirm(
+      suspended
+        ? {
+            title: `Reactivate ${library.name}?`,
+            message: "Its owner, staff and students can sign in again.",
+            confirmLabel: "Reactivate",
+            danger: false,
+          }
+        : {
+            title: `Suspend ${library.name}?`,
+            message:
+              "Its owner, staff and students are signed out immediately. Nothing is deleted.",
+            confirmLabel: "Suspend library",
+          },
+    );
+    if (ok) setStatus.mutate(suspended ? "active" : "suspended");
   };
 
   const share =

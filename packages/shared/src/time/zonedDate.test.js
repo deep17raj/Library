@@ -36,3 +36,9 @@ test("displayDateTime shows an instant in the given timezone", () => {
   assert.equal(displayDateTime(null), "Never");
   assert.match(displayDateTime("2026-09-30T20:00:00Z", "Asia/Kolkata"), /1 Oct 2026/);
 });
+
+test("month helpers", async () => {
+  const { monthRange, displayMonth } = await import("./zonedDate.js");
+  assert.deepEqual(monthRange("2028-02-10"), ["2028-02-01", "2028-02-29"]);
+  assert.equal(displayMonth("2026-10-15"), "October 2026");
+});

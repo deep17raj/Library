@@ -7,3 +7,4 @@ export * from "./layout.schema.js";
 export * from "./slot.schema.js";
 export * from "./subscription.schema.js";
 export * from "./member.schema.js";
+export * from "./money.schema.js";

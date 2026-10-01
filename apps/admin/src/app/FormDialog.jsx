@@ -6,7 +6,8 @@ import { Alert, Button, Dialog } from "@app/shared/ui";
  * Pair with useDialogForm (app/forms.js).
  * @param {{ open: boolean, onClose: () => void, title: string, submitLabel: string,
  *   busy?: boolean, formError?: string, onSubmit: (event: any) => void,
- *   danger?: boolean, children: React.ReactNode }} props
+ *   danger?: boolean, icon?: React.ComponentType, size?: "md" | "lg",
+ *   children: React.ReactNode }} props
  */
 export function FormDialog({
   open,
@@ -17,6 +18,8 @@ export function FormDialog({
   formError,
   onSubmit,
   danger,
+  icon,
+  size,
   children,
 }) {
   const formId = useId();
@@ -25,6 +28,8 @@ export function FormDialog({
       open={open}
       onClose={onClose}
       title={title}
+      icon={icon}
+      size={size}
       footer={
         <>
           <Button variant="secondary" onClick={onClose}>
@@ -36,7 +41,7 @@ export function FormDialog({
         </>
       }
     >
-      <form id={formId} onSubmit={onSubmit} className="flex flex-col gap-3" noValidate>
+      <form id={formId} onSubmit={onSubmit} className="flex flex-col gap-4" noValidate>
         <Alert tone="error">{formError}</Alert>
         {children}
       </form>

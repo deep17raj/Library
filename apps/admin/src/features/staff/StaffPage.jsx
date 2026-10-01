@@ -7,6 +7,7 @@ import { StatusBadge } from "../../app/StatusBadge.jsx";
 import { useStaff } from "./api.js";
 import { StaffDialog } from "./components/StaffDialog.jsx";
 import { ResetPasswordDialog } from "./components/ResetPasswordDialog.jsx";
+import { ICONS } from "../../app/icons.js";
 
 const CLOSED = { mode: null, member: null };
 
@@ -19,10 +20,13 @@ export function StaffPage() {
   return (
     <>
       <PageHeader
+        icon={ICONS.staff}
         title="Staff"
         description="Logins for people who help run the library, and what each may do."
         actions={
-          <Button onClick={() => setDialog({ mode: "create", member: null })}>Add staff</Button>
+          <Button onClick={() => setDialog({ mode: "create", member: null })} icon={ICONS.add}>
+            Add staff
+          </Button>
         }
       />
       <Alert tone="error">{error?.message}</Alert>

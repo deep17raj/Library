@@ -15,16 +15,22 @@ export async function libraryToday(db, tenantId, now = new Date()) {
   return localDateOf(now, row?.timezone || "Asia/Kolkata");
 }
 
-/** The billing settings subscriptions need when they are created or changed. */
+/** The billing rules subscriptions and invoices follow (Settings → Billing). */
 export async function billingSettings(db, tenantId) {
   const row = await queryOne(
     db,
-    "SELECT billing_anchor, default_collection FROM library_settings WHERE tenant_id = ?",
+    `SELECT billing_anchor, first_period_billing, default_collection, grace_days,
+            auto_release_unpaid, receipt_prefix
+       FROM library_settings WHERE tenant_id = ?`,
     [tenantId],
   );
   return {
     anchor: row?.billing_anchor || "join_date",
+    firstPeriodBilling: row?.first_period_billing || "full",
     defaultCollection: row?.default_collection || "advance",
+    graceDays: row?.grace_days ?? 7,
+    autoReleaseUnpaid: Boolean(row?.auto_release_unpaid),
+    receiptPrefix: row?.receipt_prefix ?? "R",
   };
 }
 

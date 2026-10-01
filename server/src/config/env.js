@@ -17,6 +17,7 @@ export const REPO_ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url
  * @property {{ jwtSecret: string, staffCookie: string, cookieSecure: boolean,
  *   staffTokenTtlSeconds: number }} auth
  * @property {{ email: string, password: string, name: string }} superAdmin
+ * @property {string} cronSecret  enables POST /api/internal/jobs/run (cPanel cron)
  */
 
 /** @type {AppConfig | null} */
@@ -47,6 +48,7 @@ export function getConfig() {
       password: env.SUPER_ADMIN_PASSWORD || "",
       name: (env.SUPER_ADMIN_NAME || "Platform Owner").trim(),
     },
+    cronSecret: (env.CRON_SECRET || "").trim(),
   });
   return cached;
 }

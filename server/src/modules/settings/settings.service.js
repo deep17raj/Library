@@ -26,7 +26,7 @@ export function createSettingsService({
 }) {
   return bindDeps(
     { db, storageDir, repo, audit, files },
-    { getSettings, updateSettings, replaceLogo, removeLogo },
+    { getSettings, updateSettings, updateBilling, replaceLogo, removeLogo },
   );
 }
 
@@ -53,6 +53,23 @@ async function updateSettings(deps, ctx, values) {
   await withTransaction(deps.db, async (tx) => {
     await deps.repo.updateProfile(tx, ctx.tenantId, values);
     await deps.audit.recordAudit(tx, byUser(ctx.actor, "settings.update", "library", ctx.tenantId));
+  });
+  return getSettings(deps, ctx);
+}
+
+/**
+ * Billing rules. They apply to invoices created from now on; existing invoices keep
+ * the amounts they were created with.
+ * @param {SettingsDeps} deps
+ */
+async function updateBilling(deps, ctx, values) {
+  await loadSettings(deps, ctx.tenantId);
+  await withTransaction(deps.db, async (tx) => {
+    await deps.repo.updateBilling(tx, ctx.tenantId, values);
+    await deps.audit.recordAudit(
+      tx,
+      byUser(ctx.actor, "settings.billing", "library", ctx.tenantId, values),
+    );
   });
   return getSettings(deps, ctx);
 }

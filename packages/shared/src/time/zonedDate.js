@@ -109,3 +109,21 @@ export function displayDateTime(instant, timeZone) {
   }
   return dateTimeFormatters.get(key).format(new Date(instant));
 }
+
+/** First and last day of the month a date falls in: "2026-10-15" → ["2026-10-01", "2026-10-31"]. */
+export function monthRange(dateKey) {
+  const [year, month] = dateKey.split("-").map(Number);
+  const last = new Date(Date.UTC(year, month, 0)).getUTCDate();
+  const prefix = dateKey.slice(0, 7);
+  return [`${prefix}-01`, `${prefix}-${String(last).padStart(2, "0")}`];
+}
+
+/** "2026-10" → "October 2026" */
+export function displayMonth(dateKey) {
+  const [year, month] = dateKey.split("-").map(Number);
+  return new Intl.DateTimeFormat("en-IN", {
+    month: "long",
+    year: "numeric",
+    timeZone: "UTC",
+  }).format(new Date(Date.UTC(year, month - 1, 1)));
+}

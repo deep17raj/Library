@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { ALL_SEAT_FEATURES, SEAT_FEATURE_LABELS, SEATING_MODES } from "@app/shared/constants";
 import { seatUpdateSchema } from "@app/shared/validation";
-import { Alert, Button, Checkbox, SelectField, TextField } from "@app/shared/ui";
+import { Alert, Button, Checkbox, SelectField, TextField, useConfirm } from "@app/shared/ui";
 import { useDialogForm } from "../../../app/forms.js";
 import { FormDialog } from "../../../app/FormDialog.jsx";
 import { useLayoutAction } from "../api.js";
@@ -30,8 +30,15 @@ export function SeatDialog({ seat, hall, categories, onClose }) {
     submit: (values) => update.mutateAsync({ id: seat.id, ...values }),
   });
 
+  const confirm = useConfirm();
   const onDelete = async () => {
-    if (!window.confirm(`Delete seat ${seat.label}?`)) return;
+    const ok = await confirm({
+      title: `Delete seat ${seat.label}?`,
+      message:
+        "The seat disappears from the layout. If it has ever been booked, disable it instead.",
+      confirmLabel: "Delete seat",
+    });
+    if (!ok) return;
     try {
       await remove.mutateAsync({ id: seat.id });
       onClose();

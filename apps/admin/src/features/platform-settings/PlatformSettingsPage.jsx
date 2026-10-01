@@ -3,6 +3,7 @@ import { bpsToPercentInput, platformSettingsFormSchema } from "@app/shared/valid
 import { Alert, Button, Card, PageHeader, Spinner, TextField } from "@app/shared/ui";
 import { applyServerErrors, useSchemaForm } from "../../app/forms.js";
 import { usePlatformSettings, useSavePlatformSettings } from "./api.js";
+import { ICONS } from "../../app/icons.js";
 
 export function PlatformSettingsPage() {
   const { data: settings, isLoading } = usePlatformSettings();
@@ -27,7 +28,7 @@ export function PlatformSettingsPage() {
 
   return (
     <div className="max-w-md">
-      <PageHeader title="Platform settings" />
+      <PageHeader icon={ICONS.platformSettings} title="Platform settings" />
       {isLoading ? (
         <Spinner />
       ) : (

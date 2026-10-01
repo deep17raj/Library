@@ -15,6 +15,7 @@ import { useCan } from "../../app/permissions.js";
 import { useSlots } from "../slots/api.js";
 import { useMembers } from "./api.js";
 import { MemberAvatar } from "./components/MemberAvatar.jsx";
+import { ICONS } from "../../app/icons.js";
 
 const STATUS_OPTIONS = [
   { value: "active", label: "Active" },
@@ -30,11 +31,16 @@ export function MembersPage() {
   const set = (key) => (event) => setFilters({ ...filters, [key]: event.target.value, page: 1 });
   const pages = data ? Math.max(1, Math.ceil(data.total / data.pageSize)) : 1;
   const navigate = useNavigate();
-  const addButton = canAdd && <Button onClick={() => navigate("/members/new")}>Add member</Button>;
+  const addButton = canAdd && (
+    <Button onClick={() => navigate("/members/new")} icon={ICONS.addMember}>
+      Add member
+    </Button>
+  );
 
   return (
     <>
       <PageHeader
+        icon={ICONS.members}
         title="Members"
         description={data ? `${data.total} found` : undefined}
         actions={addButton}
@@ -64,7 +70,9 @@ export function MembersPage() {
       </div>
       <Alert tone="error">{error?.message}</Alert>
       {isLoading && <Spinner />}
-      {data?.total === 0 && <EmptyState title="No members found" action={addButton} />}
+      {data?.total === 0 && (
+        <EmptyState icon={ICONS.members} title="No members found" action={addButton} />
+      )}
       {data?.members.length > 0 && (
         <Card className="p-0">
           <ul className="divide-y divide-slate-100">

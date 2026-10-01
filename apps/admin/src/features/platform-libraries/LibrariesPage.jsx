@@ -5,6 +5,7 @@ import { displayDateTime } from "@app/shared/time";
 import { useLibraries } from "./api.js";
 import { CreateLibraryDialog } from "./components/CreateLibraryDialog.jsx";
 import { StatusBadge } from "../../app/StatusBadge.jsx";
+import { ICONS } from "../../app/icons.js";
 
 export function LibrariesPage() {
   const { data: libraries, isLoading, error } = useLibraries();
@@ -13,17 +14,27 @@ export function LibrariesPage() {
   return (
     <>
       <PageHeader
+        icon={ICONS.libraries}
         title="Libraries"
         description="Every library using the platform."
-        actions={<Button onClick={() => setCreating(true)}>New library</Button>}
+        actions={
+          <Button onClick={() => setCreating(true)} icon={ICONS.add}>
+            New library
+          </Button>
+        }
       />
       <Alert tone="error">{error?.message}</Alert>
       {isLoading && <Spinner />}
       {libraries?.length === 0 && (
         <EmptyState
+          icon={ICONS.libraries}
           title="No libraries yet"
           description="Create the first library and its owner's login."
-          action={<Button onClick={() => setCreating(true)}>New library</Button>}
+          action={
+            <Button onClick={() => setCreating(true)} icon={ICONS.add}>
+              New library
+            </Button>
+          }
         />
       )}
       {libraries?.length > 0 && (

@@ -16,6 +16,7 @@ import { useCan } from "../../app/permissions.js";
 import { useSlots } from "../slots/api.js";
 import { useUpdateWaitlistEntry, useWaitlist } from "./api.js";
 import { AddWaitlistDialog } from "./components/AddWaitlistDialog.jsx";
+import { ICONS } from "../../app/icons.js";
 
 const STATUS_TONE = { waiting: "amber", offered: "green", converted: "slate", cancelled: "red" };
 
@@ -42,9 +43,16 @@ export function WaitlistPage() {
   return (
     <>
       <PageHeader
+        icon={ICONS.waitlist}
         title="Waitlist"
         description="When a slot is full, note who is waiting. Seat them when a place frees up."
-        actions={canManage && <Button onClick={() => setAdding(true)}>Add to waitlist</Button>}
+        actions={
+          canManage && (
+            <Button onClick={() => setAdding(true)} icon={ICONS.add}>
+              Add to waitlist
+            </Button>
+          )
+        }
       />
       <div className="mb-4 grid gap-3 sm:grid-cols-2">
         <SelectField
@@ -68,7 +76,7 @@ export function WaitlistPage() {
       </div>
       <Alert tone="error">{error?.message || update.error?.message}</Alert>
       {isLoading && <Spinner />}
-      {entries?.length === 0 && <EmptyState title="Nobody is waiting" />}
+      {entries?.length === 0 && <EmptyState icon={ICONS.waitlist} title="Nobody is waiting" />}
       {entries?.length > 0 && (
         <Card className="p-0">
           <ul className="divide-y divide-slate-100">
@@ -114,7 +122,7 @@ export function WaitlistPage() {
 function EntryActions({ entry, onSeat, onStatus }) {
   return (
     <>
-      <Button className="px-3 py-1 text-xs" onClick={onSeat}>
+      <Button className="px-3 py-1 text-xs" onClick={onSeat} icon={ICONS.seatMap}>
         Seat now
       </Button>
       {entry.status === "waiting" ? (

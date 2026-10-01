@@ -43,5 +43,7 @@ export function createTestBrowser(baseUrl, extraHeaders = {}) {
     useCookie: (value) => {
       cookie = value;
     },
+    /** The session cookie, for requests made with fetch directly (downloads). */
+    cookie: async () => cookie,
   };
 }

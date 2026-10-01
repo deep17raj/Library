@@ -3,6 +3,7 @@ import { Alert, PageHeader, Spinner } from "@app/shared/ui";
 import { useLibrary } from "./api.js";
 import { LibrarySummaryCard } from "./components/LibrarySummaryCard.jsx";
 import { AccountsCard } from "./components/AccountsCard.jsx";
+import { ICONS } from "../../app/icons.js";
 
 export function LibraryDetailPage() {
   const { id } = useParams();
@@ -17,7 +18,11 @@ export function LibraryDetailPage() {
       <Alert tone="error">{error?.message}</Alert>
       {library && (
         <>
-          <PageHeader title={library.name} description={`/s/${library.slug}`} />
+          <PageHeader
+            icon={ICONS.libraries}
+            title={library.name}
+            description={`/s/${library.slug}`}
+          />
           <div className="grid gap-6 lg:grid-cols-2">
             <LibrarySummaryCard library={library} />
             <AccountsCard library={library} />

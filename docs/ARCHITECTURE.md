@@ -43,7 +43,7 @@ with `require`).
 ├─ package.json                workspaces + root scripts: dev, build, test, lint, verify
 ├─ eslint.config.mjs  .prettierrc  .env.example  CLAUDE.md
 ├─ docs/
-│  ├─ ARCHITECTURE.md  GYM-REFERENCE-NOTES.md  TECH-DEBT.md
+│  ├─ ARCHITECTURE.md  UI-GUIDE.md  GYM-REFERENCE-NOTES.md  TECH-DEBT.md
 │  └─ DEPLOY-SHARED-HOSTING.md            (milestone 11)
 ├─ packages/shared/                       "@app/shared" — no Node- or DOM-only APIs
 │  └─ src/
@@ -63,6 +63,7 @@ with `require`).
 │  └─ src/
 │     ├─ main.js        load env → run migrations → seed super admin → start jobs → listen
 │     ├─ app.js         build the Express app (middleware order lives here only)
+│     ├─ services.js    builds every service once (cross-module wiring is visible here)
 │     ├─ routes.js      mounts every module router under /api
 │     ├─ config/        env.js (reads + validates process.env once)
 │     ├─ db/            pool.js, transaction.js (withTransaction), migrate.js
@@ -71,7 +72,7 @@ with `require`).
 │     ├─ middleware/    staffAuth.js, studentAuth.js, tenantContext.js,
 │     │                 requirePermission.js, rateLimit.js, upload.js
 │     ├─ lib/           jwt.js, password.js, dailyCode.js, images.js, csv.js, clock.js
-│     ├─ jobs/          scheduler.js + one file per job (see §8.5)
+│     ├─ jobs/          scheduler.js, jobs.js (job list), internal.routes.js (cron, §8.5)
 │     ├─ static/        serveApps.js (admin + student builds, per-library manifest)
 │     └─ modules/       one folder per feature (list below)
 │        └─ seats/      seats.routes.js  seats.controller.js  seats.service.js
@@ -528,10 +529,13 @@ CREATE TABLE invoices (
   due_on DATE NOT NULL,
   amount_paise INT UNSIGNED NOT NULL,
   discount_paise INT UNSIGNED NOT NULL DEFAULT 0,
-  paid_paise INT UNSIGNED NOT NULL DEFAULT 0,    -- maintained only by payments.service
+  discount_reason VARCHAR(200) NOT NULL DEFAULT '',
+  paid_paise INT UNSIGNED NOT NULL DEFAULT 0,    -- kept in step with payment_allocations
   status ENUM('open','paid','void') NOT NULL DEFAULT 'open',
+  void_reason VARCHAR(200) NULL,
   -- Makes generation idempotent: 'sub:<id>:<period_start>', 'admission:<member>'.
   dedupe_key VARCHAR(100) NULL,
+  created_by CHAR(36) NULL,
   created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
   UNIQUE KEY uq_inv_tenant_id (tenant_id, id),
   UNIQUE KEY uq_inv_dedupe (tenant_id, dedupe_key),
@@ -571,6 +575,7 @@ CREATE TABLE payment_allocations (
   invoice_id CHAR(36) NOT NULL,
   tenant_id CHAR(36) NOT NULL,
   amount_paise INT UNSIGNED NOT NULL,
+  created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
   PRIMARY KEY (payment_id, invoice_id),
   KEY ix_palloc_invoice (invoice_id),
   CONSTRAINT fk_palloc_pay FOREIGN KEY (tenant_id, payment_id) REFERENCES payments(tenant_id, id),
@@ -589,7 +594,8 @@ CREATE TABLE deposit_refunds (
   created_by CHAR(36) NULL,
   created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
   KEY ix_refund_tenant_day (tenant_id, refunded_on),
-  CONSTRAINT fk_refund_inv FOREIGN KEY (tenant_id, invoice_id) REFERENCES invoices(tenant_id, id)
+  CONSTRAINT fk_refund_inv FOREIGN KEY (tenant_id, invoice_id) REFERENCES invoices(tenant_id, id),
+  CONSTRAINT fk_refund_member FOREIGN KEY (tenant_id, member_id) REFERENCES members(tenant_id, id)
 );
 
 CREATE TABLE expenses (
@@ -600,6 +606,8 @@ CREATE TABLE expenses (
   amount_paise INT UNSIGNED NOT NULL,
   spent_on DATE NOT NULL,
   mode ENUM('cash','upi','card','bank','cheque','online','other') NULL,
+  status ENUM('valid','void') NOT NULL DEFAULT 'valid',   -- money is voided, never deleted
+  void_reason VARCHAR(200) NULL,
   created_by CHAR(36) NULL,
   created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
   KEY ix_exp_day (tenant_id, spent_on),
@@ -969,48 +977,60 @@ floating halls instead of names on seats.
 - No GST on receipts or sales for now [D9].
 - **Admission fee** and **security deposit**: one invoice each at joining (`dedupe_key`
   makes them unique).
-- Generation is **idempotent** (`dedupe_key`), runs in the daily job and lazily when a
-  member's dues are read, and only creates periods whose start ≤ today (+ the reminder window).
-- Period math is in `shared/billing/periods.js` (tested); the server is the only writer.
+- Generation is **idempotent** (`dedupe_key`, `INSERT … ON DUPLICATE KEY UPDATE id = id`).
+  It runs when a member's account is opened, before a payment, from the dues list and in
+  the hourly job, and only creates periods that have started (an ended booking still owes
+  the period it was used in). `shared/billing/invoicePlan.js` plans the invoices (tested);
+  the billing module is the only writer.
 
 ### 8.2 Payments
-- A payment has an amount and mode; the service allocates it to that member's open
-  invoices **oldest due first** (or to invoices the staff picked). Partial payment = an
-  invoice with `0 < paid < amount`. Over-payment stays as credit and is applied to the
-  next invoice when it's generated.
+- A payment has an amount and mode; shared `planAllocation` pays the invoices the staff
+  picked first, then **oldest due first**; on the same due day the order is admission,
+  seat fee, locker, other, and the refundable **deposit last**. Partial payment = an
+  invoice with `0 < paid < amount`. Over-payment is **credit** (payment money not yet
+  allocated) and is applied automatically when new invoices appear.
 - Receipt number from `counters` in the same transaction → printed `R-000123`.
-- **Void**, never delete: reverses allocations, keeps the row, writes `audit_log`.
-  Needs `payments.void`.
+- **Void**, never delete: reverses allocations (listed in the `audit_log` row), keeps the
+  payment marked void, re-applies any remaining credit. Needs `payments.void`. A payment
+  whose deposit was already refunded can't be voided.
+- **Discounts** (with a reason, at most the unpaid part) and **voiding unpaid charges**
+  need `payments.void`; manual "other" charges need `payments.collect`.
 - **Deposits** are money held, not revenue: the ledger and insights show them separately;
   refunds are recorded in `deposit_refunds`.
 
 ### 8.3 Dues
 `shared/billing/dues.js` turns a member's invoices into
-`{ outstandingPaise, overdueSince, nextDueOn, daysLeft, daysOverdue, cycleDays }` —
-the same object drives the admin member card and the student "next due" card.
+`{ outstandingPaise, upcomingPaise, overdueSince, daysOverdue, nextDueOn, nextDueAmountPaise }` —
+the same object drives the admin member card and (M7) the student "next due" card. The
+dues list groups members into ageing buckets (0–7, 8–30, 30+ days overdue).
 
 ### 8.4 Ledger & insights
-- **Day ledger:** for a local date — payments by mode, expenses by mode, deposits in/out,
-  net cash. **CSV export** for payments, expenses, members, attendance.
+- **Day ledger:** for a local date — collected, spent and refunded by mode, deposits in,
+  earned (collected − deposits), net, and **cash in hand** (cash in − cash out).
+- **CSV export** for payments, expenses, dues, members (attendance in M6): UTF-8 BOM so
+  Excel reads ₹ and Hindi names, formula-injection safe (`server/src/lib/csv.js`).
+- **Dashboard** (`GET /admin/dashboard`): collected today, owed now, longest overdue,
+  active students and bookings, waiting list, bookings per slot.
 - **Insights:** occupancy % per slot (`seat-slot pairs taken ÷ active seats`), revenue
   per month (excluding deposits), dues ageing (0–7 / 8–30 / 30+ days), new vs. churned
   subscriptions per month, attendance rate per slot, mock-test sales.
 
 ### 8.5 Background jobs
 `server/src/jobs/scheduler.js` runs each job at most once per interval, recording
-`job_runs`. Passenger may sleep an idle process, so (a) jobs also run on the first
-request after they become due, and (b) `POST /api/internal/jobs/run` with
-`X-Cron-Secret` lets a cPanel cron trigger them.
+`job_runs`; it ticks every minute while the process is awake and once at boot.
+Passenger may sleep an idle process, so `POST /api/internal/jobs/run` with
+`X-Cron-Secret` (= `CRON_SECRET`) lets a cPanel cron wake it. The job list is in
+`jobs/jobs.js`; jobs act as the "system" actor for every active library.
 
-| Job | Every | Does |
-|---|---|---|
-| `generateInvoices` | 1 h | create due period invoices (idempotent) |
-| `releaseUnpaidSeats` | 1 h | if `auto_release_unpaid`: release seats whose oldest overdue invoice is past `grace_days`; notify member + waitlist |
-| `endFinishedSubscriptions` | 1 h | end subscriptions whose `end_on` passed; release seats |
-| `sendFeeReminders` | 1 h (9:00–20:00 local) | `fee_due` notifications N days before / on due day (deduped) |
-| `sendSeatExpiryReminders` | 1 h | before `end_on` / before auto-release |
-| `autoSubmitAttempts` | 1 min | submit attempts past `deadline_at` |
-| `reconcileOrders` | 10 min | ask the gateway about `created` orders older than 15 min |
+| Job | Every | Built | Does |
+|---|---|---|---|
+| `generate-invoices` | 1 h | **M5** | create due period invoices (idempotent), apply credit |
+| `releaseUnpaidSeats` | 1 h | M8 | if `auto_release_unpaid`: release seats whose oldest overdue invoice is past `grace_days`; notify member + waitlist |
+| `endFinishedSubscriptions` | 1 h | M8 | end subscriptions whose `end_on` passed; release seats |
+| `sendFeeReminders` | 1 h (9:00–20:00 local) | M8 | `fee_due` notifications N days before / on due day (deduped) |
+| `sendSeatExpiryReminders` | 1 h | M8 | before `end_on` / before auto-release |
+| `autoSubmitAttempts` | 1 min | M10 | submit attempts past `deadline_at` |
+| `reconcileOrders` | 10 min | M10 | ask the gateway about `created` orders older than 15 min |
 
 ## 9. Attendance & check-in
 
@@ -1190,32 +1210,35 @@ Lists support `?page=&pageSize=&q=`. Legend: **P** = public, **SA** = super_admi
 | POST | /admin/slots (creates the default Monthly plan) · PATCH /admin/slots/:id (times, archive) | S:slots.manage |
 | POST | /admin/slots/:id/plans · PATCH /admin/plans/:id | S:slots.manage |
 | GET | /admin/members?q=&status=&slotId=&page=&pageSize= (with current placements) | any staff |
-| POST | /admin/members (member + bookings + waitlist conversion, one tx; joining invoices join in M5) | S:members.manage |
+| POST | /admin/members (member + bookings + waitlist conversion, one tx; admission/deposit invoices + first fee invoices in the same tx) | S:members.manage |
 | GET | /admin/members/:id (member, subscriptions, seat history) | any staff |
 | PATCH | /admin/members/:id · POST, DELETE /admin/members/:id/photo · POST /admin/members/:id/id-proof (multipart) | S:members.manage |
 | POST | /admin/members/:id/reset-password (student app login, M7) | S:members.manage |
 | GET | /admin/members/:id/id-proof (private file) | S:members.manage |
-| GET | /admin/members/:id/{invoices,payments,attendance} (M5, M6) | any staff |
+| GET | /admin/members/:id/attendance (M6); invoices and payments come from /admin/members/:memberId/account | any staff |
 | GET | /admin/subscriptions/:id | any staff |
 | POST | /admin/members/:id/subscriptions `{slotId, planId, seatId\|hallId, startOn?, collection?, lockerFeePaise?}` | S:seats.allocate |
 | POST | /admin/subscriptions/:id/move `{seatId\|hallId}` | S:seats.allocate |
 | POST | /admin/subscriptions/:id/change-slot `{slotId, planId, seatId\|hallId}` | S:seats.allocate |
-| POST | /admin/subscriptions/:id/end `{reason: left\|admin}` (today; future end dates: M5) | S:seats.allocate |
+| POST | /admin/subscriptions/:id/end `{reason: left\|admin}` (today; future end dates: M8 job) | S:seats.allocate |
 | POST | /admin/subscriptions/swap `{subscriptionA, subscriptionB}` | S:seats.allocate |
 | GET | /admin/waitlist?slotId=&view=open\|all (with queue position) | any staff |
 | POST | /admin/waitlist · PATCH /admin/waitlist/:id (offered / waiting / cancelled); conversion happens in POST /admin/members via `waitlistEntryId` | S:members.manage |
-| GET | /admin/dues (who owes, ageing) · /admin/invoices?memberId= | any staff |
-| POST | /admin/invoices (manual "other" charge) · /admin/invoices/:id/void | S:payments.void |
-| POST | /admin/payments ⏱ `{memberId, amountPaise, mode, invoiceIds?}` | S:payments.collect |
-| GET | /admin/payments?from=&to= · /admin/payments/:id/receipt | S:payments.collect |
+| GET | /admin/members/:memberId/account (summary, invoices, payments, refunds, credit) · /admin/dues (ageing) | any staff |
+| POST | /admin/invoices (manual "other" charge) | S:payments.collect |
+| PATCH | /admin/invoices/:id/discount `{discountPaise, reason}` | S:payments.void |
+| POST | /admin/invoices/:id/void `{reason}` (unpaid only) · /admin/invoices/:id/refund (deposit) | S:payments.void |
+| POST | /admin/payments `{memberId, amountPaise, mode, reference?, invoiceIds?, receivedOn?}` | S:payments.collect |
+| GET | /admin/payments?from=&to=&mode= · /admin/payments/:id (receipt data) | S:payments.collect |
 | POST | /admin/payments/:id/void `{reason}` | S:payments.void |
-| POST | /admin/deposits/:invoiceId/refund | S:payments.void |
-| GET, POST | /admin/expenses · PATCH, DELETE /admin/expenses/:id | S:expenses.manage |
+| GET, POST | /admin/expenses?from=&to= · POST /admin/expenses/:id/void | S:expenses.manage |
 | GET | /admin/ledger?date= | S:payments.collect |
+| GET | /admin/dashboard | any staff |
+| PUT | /admin/settings/billing (anchor, first period, collection, grace days) | S:settings.manage |
 | GET | /admin/attendance?date=&slotId= · POST /admin/attendance (manual) | S:attendance.manage |
 | GET | /admin/checkin/desk (today's code + QR URL) | any staff |
 | GET | /admin/insights/{occupancy,revenue,dues,churn,attendance,mocktests} | S:insights.view |
-| GET | /admin/export/{members,payments,expenses,attendance}.csv | S:insights.view |
+| GET | /admin/export/payments.csv, dues.csv (S:payments.collect) · expenses.csv (S:expenses.manage) · members.csv (S:members.manage) · attendance.csv (M6) | as listed |
 | GET | /admin/notifications · POST /admin/notifications (announce) ⏱ | S:notifications.send |
 | GET | /admin/notifications/preview?audience= (recipient count) | S:notifications.send |
 | GET | /admin/mocktests/sales (own students, share owed) | S:mocktests.view |
@@ -1244,6 +1267,10 @@ Lists support `?page=&pageSize=&q=`. Legend: **P** = public, **SA** = super_admi
 `/.well-known/assetlinks.json`.
 
 ## 12. Screens
+
+How every screen looks and behaves — tokens, icons, components, patterns, copy rules and
+per-screen notes for built and future screens — is in **`docs/UI-GUIDE.md`**. Read it
+before building or changing any screen.
 
 **Admin app** (`/admin`) — sidebar items hidden when the user lacks the permission.
 1. Login · Change password

@@ -38,3 +38,6 @@ export const useUploadLogo = () =>
   });
 
 export const useRemoveLogo = () => useSettingsMutation(() => api.delete("/admin/settings/logo"));
+
+export const useSaveBillingRules = () =>
+  useSettingsMutation((values) => api.put("/admin/settings/billing", values));

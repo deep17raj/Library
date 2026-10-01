@@ -1,21 +1,15 @@
 import { createBrowserRouter, Navigate } from "react-router-dom";
 import { Shell } from "./app/Shell.jsx";
 import { LoginPage } from "./features/auth/LoginPage.jsx";
-import { ChangePasswordPage } from "./features/auth/ChangePasswordPage.jsx";
-import { DashboardPage } from "./features/dashboard/DashboardPage.jsx";
 import { HomeRedirect } from "./features/dashboard/HomeRedirect.jsx";
-import { LayoutPage } from "./features/layout/LayoutPage.jsx";
-import { SettingsPage } from "./features/settings/SettingsPage.jsx";
-import { SlotsPage } from "./features/slots/SlotsPage.jsx";
-import { MembersPage } from "./features/members/MembersPage.jsx";
-import { NewMemberPage } from "./features/members/NewMemberPage.jsx";
-import { MemberDetailPage } from "./features/members/MemberDetailPage.jsx";
-import { SeatMapPage } from "./features/seat-map/SeatMapPage.jsx";
-import { WaitlistPage } from "./features/waitlist/WaitlistPage.jsx";
-import { StaffPage } from "./features/staff/StaffPage.jsx";
-import { LibrariesPage } from "./features/platform-libraries/LibrariesPage.jsx";
-import { LibraryDetailPage } from "./features/platform-libraries/LibraryDetailPage.jsx";
-import { PlatformSettingsPage } from "./features/platform-settings/PlatformSettingsPage.jsx";
+
+/**
+ * Each page is its own download, fetched the first time it is opened, so a phone on a
+ * slow connection loads the login screen and the dashboard without the whole app.
+ * @param {() => Promise<Record<string, unknown>>} load dynamic import of the page module
+ * @param {string} name the page component's export name
+ */
+const page = (load, name) => () => load().then((module) => ({ Component: module[name] }));
 
 export const router = createBrowserRouter(
   [
@@ -24,20 +18,82 @@ export const router = createBrowserRouter(
       element: <Shell />,
       children: [
         { index: true, element: <HomeRedirect /> },
-        { path: "dashboard", element: <DashboardPage /> },
-        { path: "layout", element: <LayoutPage /> },
-        { path: "slots", element: <SlotsPage /> },
-        { path: "seat-map", element: <SeatMapPage /> },
-        { path: "members", element: <MembersPage /> },
-        { path: "members/new", element: <NewMemberPage /> },
-        { path: "members/:id", element: <MemberDetailPage /> },
-        { path: "waitlist", element: <WaitlistPage /> },
-        { path: "staff", element: <StaffPage /> },
-        { path: "settings", element: <SettingsPage /> },
-        { path: "account/password", element: <ChangePasswordPage /> },
-        { path: "platform/libraries", element: <LibrariesPage /> },
-        { path: "platform/libraries/:id", element: <LibraryDetailPage /> },
-        { path: "platform/settings", element: <PlatformSettingsPage /> },
+        {
+          path: "dashboard",
+          lazy: page(() => import("./features/dashboard/DashboardPage.jsx"), "DashboardPage"),
+        },
+        {
+          path: "seat-map",
+          lazy: page(() => import("./features/seat-map/SeatMapPage.jsx"), "SeatMapPage"),
+        },
+        {
+          path: "members",
+          lazy: page(() => import("./features/members/MembersPage.jsx"), "MembersPage"),
+        },
+        {
+          path: "members/new",
+          lazy: page(() => import("./features/members/NewMemberPage.jsx"), "NewMemberPage"),
+        },
+        {
+          path: "members/:id",
+          lazy: page(() => import("./features/members/MemberDetailPage.jsx"), "MemberDetailPage"),
+        },
+        {
+          path: "waitlist",
+          lazy: page(() => import("./features/waitlist/WaitlistPage.jsx"), "WaitlistPage"),
+        },
+        { path: "dues", lazy: page(() => import("./features/billing/DuesPage.jsx"), "DuesPage") },
+        {
+          path: "payments",
+          lazy: page(() => import("./features/billing/PaymentsPage.jsx"), "PaymentsPage"),
+        },
+        {
+          path: "payments/:id/receipt",
+          lazy: page(() => import("./features/billing/ReceiptPage.jsx"), "ReceiptPage"),
+        },
+        {
+          path: "expenses",
+          lazy: page(() => import("./features/expenses/ExpensesPage.jsx"), "ExpensesPage"),
+        },
+        {
+          path: "ledger",
+          lazy: page(() => import("./features/ledger/LedgerPage.jsx"), "LedgerPage"),
+        },
+        {
+          path: "layout",
+          lazy: page(() => import("./features/layout/LayoutPage.jsx"), "LayoutPage"),
+        },
+        { path: "slots", lazy: page(() => import("./features/slots/SlotsPage.jsx"), "SlotsPage") },
+        { path: "staff", lazy: page(() => import("./features/staff/StaffPage.jsx"), "StaffPage") },
+        {
+          path: "settings",
+          lazy: page(() => import("./features/settings/SettingsPage.jsx"), "SettingsPage"),
+        },
+        {
+          path: "account/password",
+          lazy: page(() => import("./features/auth/ChangePasswordPage.jsx"), "ChangePasswordPage"),
+        },
+        {
+          path: "platform/libraries",
+          lazy: page(
+            () => import("./features/platform-libraries/LibrariesPage.jsx"),
+            "LibrariesPage",
+          ),
+        },
+        {
+          path: "platform/libraries/:id",
+          lazy: page(
+            () => import("./features/platform-libraries/LibraryDetailPage.jsx"),
+            "LibraryDetailPage",
+          ),
+        },
+        {
+          path: "platform/settings",
+          lazy: page(
+            () => import("./features/platform-settings/PlatformSettingsPage.jsx"),
+            "PlatformSettingsPage",
+          ),
+        },
         { path: "*", element: <Navigate to="/" replace /> },
       ],
     },

@@ -6,6 +6,7 @@ import { useLayout } from "./api.js";
 import { CategoriesCard } from "./components/CategoriesCard.jsx";
 import { HallDialog } from "./components/HallDialog.jsx";
 import { HallView } from "./components/HallView.jsx";
+import { ICONS } from "../../app/icons.js";
 
 /** Layout editor: seat categories, then one tab per hall with its tables and seats. */
 export function LayoutPage() {
@@ -20,9 +21,16 @@ export function LayoutPage() {
   return (
     <>
       <PageHeader
+        icon={ICONS.layout}
         title="Halls & seats"
         description="Build your library's layout: halls, tables and numbered seats."
-        actions={canEdit && <Button onClick={() => setAddingHall(true)}>Add hall</Button>}
+        actions={
+          canEdit && (
+            <Button onClick={() => setAddingHall(true)} icon={ICONS.add}>
+              Add hall
+            </Button>
+          )
+        }
       />
       {isLoading && <Spinner />}
       <Alert tone="error">{error?.message}</Alert>
@@ -31,9 +39,16 @@ export function LayoutPage() {
           <CategoriesCard categories={layout.categories} canEdit={canEdit} />
           {halls.length === 0 ? (
             <EmptyState
+              icon={ICONS.layout}
               title="No halls yet"
               description="Add a hall, then add its tables and seats in one step."
-              action={canEdit && <Button onClick={() => setAddingHall(true)}>Add hall</Button>}
+              action={
+                canEdit && (
+                  <Button onClick={() => setAddingHall(true)} icon={ICONS.add}>
+                    Add hall
+                  </Button>
+                )
+              }
             />
           ) : (
             <>

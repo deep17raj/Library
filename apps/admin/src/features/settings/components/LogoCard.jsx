@@ -1,5 +1,5 @@
 import { useRef } from "react";
-import { Alert, Button, Card } from "@app/shared/ui";
+import { Alert, Button, Card, useToast } from "@app/shared/ui";
 import { useRemoveLogo, useUploadLogo } from "../api.js";
 
 const MAX_BYTES = 2 * 1024 * 1024;
@@ -8,6 +8,7 @@ const MAX_BYTES = 2 * 1024 * 1024;
 export function LogoCard({ settings }) {
   const upload = useUploadLogo();
   const remove = useRemoveLogo();
+  const toast = useToast();
   const fileInput = useRef(/** @type {HTMLInputElement | null} */ (null));
   const error = upload.error || remove.error;
 
@@ -16,7 +17,7 @@ export function LogoCard({ settings }) {
     event.target.value = "";
     if (!file) return;
     if (file.size > MAX_BYTES) {
-      window.alert("Please choose an image smaller than 2 MB.");
+      toast("Please choose an image smaller than 2 MB.", { tone: "error" });
       return;
     }
     upload.mutate(file);
