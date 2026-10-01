@@ -18,3 +18,8 @@ Format: **date — area — what — why it was accepted — how to pay it off.*
   super admin (`middleware/libraryContext.js`, tested), but the admin app has no
   "open as library" switch yet. Add a library picker on the Libraries page that sets
   the header in the API client.
+- **2026-10-01 — ending on a future date** — `POST /subscriptions/:id/end` ends today.
+  Planned end dates (`end_on` in the future, package expiry) need the job scheduler
+  from milestone 5, which will end due subscriptions and free their seats.
+- **2026-10-01 — members created only in tests** — the members API arrives in
+  milestone 4; until then `server/testing/seed.js` inserts members directly.

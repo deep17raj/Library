@@ -10,6 +10,12 @@ import {
   requireTable,
 } from "./layoutRules.js";
 import { getLayout } from "./layoutTree.js";
+import { assertSeatsRemovable } from "./occupancyGuards.js";
+
+async function hallOfSeat(deps, ctx, seat) {
+  const table = await requireTable(deps, ctx, seat.tableId);
+  return requireHall(deps, deps.db, ctx, table.hallId);
+}
 
 /** @typedef {import("./layoutRules.js").LayoutDeps} LayoutDeps */
 
@@ -24,7 +30,14 @@ export async function updateTable(deps, ctx, id, patch) {
 
 /** @param {LayoutDeps} deps */
 export async function deleteTable(deps, ctx, id) {
-  await requireTable(deps, ctx, id);
+  const table = await requireTable(deps, ctx, id);
+  const hall = await requireHall(deps, deps.db, ctx, table.hallId);
+  await assertSeatsRemovable(
+    deps,
+    ctx,
+    hall,
+    await deps.repo.listSeatsOfTable(deps.db, ctx.tenantId, id),
+  );
   await changeLayout(deps, ctx, ["table.delete", "table", id], (tx) =>
     deps.repo.deleteTableWithSeats(tx, ctx.tenantId, id),
   );
@@ -65,12 +78,15 @@ export async function addSeats(deps, ctx, tableId, { count, seatPrefix, startNum
 }
 
 /**
- * Rename, re-categorise, tag or disable one seat. Milestone 3 adds: a seat with an
- * active allocation can't be disabled.
+ * Rename, re-categorise, tag or disable one seat. A seat someone holds can't be
+ * disabled. (A category change applies to new subscriptions; current students keep
+ * the price they agreed.)
  * @param {LayoutDeps} deps
  */
 export async function updateSeat(deps, ctx, id, patch) {
   const seat = await requireSeat(deps, ctx, id);
+  if (patch.status === "disabled")
+    await assertSeatsRemovable(deps, ctx, await hallOfSeat(deps, ctx, seat), [seat]);
   await assertAssignableCategory(deps, ctx, patch.categoryId);
   if (patch.label && patch.label.toLowerCase() !== seat.label.toLowerCase()) {
     await assertSeatLabelsFree(deps, deps.db, ctx, [patch.label], "label");
@@ -83,7 +99,8 @@ export async function updateSeat(deps, ctx, id, patch) {
 
 /** @param {LayoutDeps} deps */
 export async function deleteSeat(deps, ctx, id) {
-  await requireSeat(deps, ctx, id);
+  const seat = await requireSeat(deps, ctx, id);
+  await assertSeatsRemovable(deps, ctx, await hallOfSeat(deps, ctx, seat), [seat]);
   await changeLayout(deps, ctx, ["seat.delete", "seat", id], (tx) =>
     deps.repo.deleteSeat(tx, ctx.tenantId, id),
   );

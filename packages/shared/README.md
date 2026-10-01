@@ -8,6 +8,8 @@ both need it, it lives here.
 | `constants/` | Roles, staff permissions (+ labels), API error codes, seat features, seating modes. |
 | `money/` | Integer-paise helpers: parse rupee input, format for display, sum. |
 | `time/` | Library-timezone helpers: "what is today's date in this library". |
+| `slots/` | Slot time maths in 30-minute cells: overlap, overnight wrap, in-slot check, sit-anywhere capacity; clock formatting. |
+| `billing/` | `subscriptionPrice` (plan + category surcharge) and billing periods (`periodContaining`, `nextPeriodStart`). |
 | `layout/` | Seat/table numbering for bulk adds (`planTablesWithSeats`, `nextSeatNumber`). |
 | `theme/` | `brandPalette(hex)` — one brand colour → the shades both apps use. |
 | `validation/` | zod schemas — the same schema validates a form and its API route. |

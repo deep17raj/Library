@@ -6,6 +6,7 @@ import { DashboardPage } from "./features/dashboard/DashboardPage.jsx";
 import { HomeRedirect } from "./features/dashboard/HomeRedirect.jsx";
 import { LayoutPage } from "./features/layout/LayoutPage.jsx";
 import { SettingsPage } from "./features/settings/SettingsPage.jsx";
+import { SlotsPage } from "./features/slots/SlotsPage.jsx";
 import { StaffPage } from "./features/staff/StaffPage.jsx";
 import { LibrariesPage } from "./features/platform-libraries/LibrariesPage.jsx";
 import { LibraryDetailPage } from "./features/platform-libraries/LibraryDetailPage.jsx";
@@ -20,6 +21,7 @@ export const router = createBrowserRouter(
         { index: true, element: <HomeRedirect /> },
         { path: "dashboard", element: <DashboardPage /> },
         { path: "layout", element: <LayoutPage /> },
+        { path: "slots", element: <SlotsPage /> },
         { path: "staff", element: <StaffPage /> },
         { path: "settings", element: <SettingsPage /> },
         { path: "account/password", element: <ChangePasswordPage /> },

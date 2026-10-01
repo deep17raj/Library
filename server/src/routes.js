@@ -13,6 +13,10 @@ import { createStaffService } from "./modules/staff/staff.service.js";
 import { createStaffRouter } from "./modules/staff/staff.routes.js";
 import { createLayoutService } from "./modules/layout/layout.service.js";
 import { createLayoutRouter } from "./modules/layout/layout.routes.js";
+import { createSlotsService } from "./modules/slots/slots.service.js";
+import { createSlotsRouter } from "./modules/slots/slots.routes.js";
+import { createSubscriptionsService } from "./modules/subscriptions/subscriptions.service.js";
+import { createSubscriptionsRouter } from "./modules/subscriptions/subscriptions.routes.js";
 
 /**
  * Builds every service once and mounts every module router under /api.
@@ -20,7 +24,11 @@ import { createLayoutRouter } from "./modules/layout/layout.routes.js";
  * @param {{ db: import("mysql2/promise").Pool, config: import("./config/env.js").AppConfig }} deps
  */
 export function createApiRouter({ db, config }) {
+  const subscriptionsService = createSubscriptionsService({ db });
   const services = {
+    subscriptionsService,
+    // Changing a slot's times moves its students' seat cells — the subscriptions module's job.
+    slotsService: createSlotsService({ db, rescheduleSlot: subscriptionsService.rescheduleSlot }),
     authService: createAuthService({ db, config }),
     platformService: createPlatformService({ db }),
     settingsService: createSettingsService({ db, storageDir: config.storageDir }),
@@ -57,5 +65,7 @@ function createAdminRouter({ services, requireStaff, requireLibrary }) {
   admin.use("/settings", createSettingsRouter({ settingsService: services.settingsService }));
   admin.use("/staff", createStaffRouter({ staffService: services.staffService }));
   admin.use(createLayoutRouter({ layoutService: services.layoutService }));
+  admin.use(createSlotsRouter({ slotsService: services.slotsService }));
+  admin.use(createSubscriptionsRouter({ subscriptionsService: services.subscriptionsService }));
   return admin;
 }

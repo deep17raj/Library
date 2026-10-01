@@ -2,6 +2,8 @@ import { bindDeps } from "../../lib/bindDeps.js";
 import { recordAudit } from "../audit/audit.repository.js";
 import * as layoutRepository from "./layout.repository.js";
 import * as seatCategoriesRepository from "./seatCategories.repository.js";
+import * as allocationsRepository from "../subscriptions/allocations.repository.js";
+import * as subscriptionsRepository from "../subscriptions/subscriptions.repository.js";
 import { getLayout } from "./layoutTree.js";
 import { createCategory, updateCategory } from "./seatCategories.service.js";
 import { addTables, createHall, deleteHall, updateHall } from "./halls.service.js";
@@ -22,9 +24,14 @@ export function createLayoutService({
   repo = layoutRepository,
   categories = seatCategoriesRepository,
   audit = { recordAudit },
+  occupancy = {
+    countActiveAllocationsOnSeat: allocationsRepository.countActiveAllocationsOnSeat,
+    listActiveSlotsInHall: subscriptionsRepository.listActiveSlotsInHall,
+    countActiveSubscriptionsInHall: subscriptionsRepository.countActiveSubscriptionsInHall,
+  },
 }) {
   return bindDeps(
-    { db, repo, categories, audit },
+    { db, repo, categories, audit, occupancy },
     {
       getLayout,
       createCategory,

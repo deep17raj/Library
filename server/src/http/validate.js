@@ -9,3 +9,11 @@ export function validateBody(schema) {
     next();
   };
 }
+
+/** Same for the query string; the parsed value goes to req.validatedQuery. */
+export function validateQuery(schema) {
+  return (req, res, next) => {
+    req.validatedQuery = schema.parse(req.query ?? {});
+    next();
+  };
+}

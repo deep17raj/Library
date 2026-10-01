@@ -11,6 +11,7 @@ const inLibraryWith = (permission) => (user) => inLibrary(user) && hasPermission
 export const NAV_ITEMS = [
   { to: "/dashboard", label: "Dashboard", visible: inLibrary },
   { to: "/layout", label: "Halls & seats", visible: inLibrary },
+  { to: "/slots", label: "Slots & fees", visible: inLibrary },
   { to: "/staff", label: "Staff", visible: inLibraryWith(PERMISSIONS.STAFF_MANAGE) },
   { to: "/settings", label: "Settings", visible: inLibraryWith(PERMISSIONS.SETTINGS_MANAGE) },
   { to: "/platform/libraries", label: "Libraries", visible: isSuperAdmin },

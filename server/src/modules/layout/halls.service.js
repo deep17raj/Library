@@ -8,6 +8,7 @@ import {
   requireHall,
 } from "./layoutRules.js";
 import { getLayout } from "./layoutTree.js";
+import { assertHallChangeAllowed } from "./occupancyGuards.js";
 
 /** @typedef {import("./layoutRules.js").LayoutDeps} LayoutDeps */
 
@@ -23,12 +24,12 @@ export async function createHall(deps, ctx, input) {
 }
 
 /**
- * Seating mode can change freely until students are allocated; milestone 3 adds the
- * rule that blocks it while a hall has active subscriptions.
+ * Seating mode can't change, and the hall can't be disabled, while students sit in it.
  * @param {LayoutDeps} deps
  */
 export async function updateHall(deps, ctx, id, patch) {
-  await requireHall(deps, deps.db, ctx, id);
+  const hall = await requireHall(deps, deps.db, ctx, id);
+  await assertHallChangeAllowed(deps, ctx, hall, patch);
   await assertAssignableCategory(deps, ctx, patch.categoryId);
   await changeLayout(deps, ctx, ["hall.update", "hall", id, patch], (tx) =>
     deps.repo.updateHall(tx, ctx.tenantId, id, patch),

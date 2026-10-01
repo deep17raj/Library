@@ -12,7 +12,9 @@
     "./api": "./src/api/index.js",
     "./ui": "./src/ui/index.js",
     "./layout": "./src/layout/index.js",
-    "./theme": "./src/theme/index.js"
+    "./theme": "./src/theme/index.js",
+    "./slots": "./src/slots/index.js",
+    "./billing": "./src/billing/index.js"
   },
   "scripts": {
     "test": "node --test"

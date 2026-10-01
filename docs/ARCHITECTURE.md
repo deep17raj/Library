@@ -436,11 +436,13 @@ CREATE TABLE subscriptions (
   period_count SMALLINT UNSIGNED NOT NULL,       -- snapshot
   locker_fee_paise INT UNSIGNED NOT NULL DEFAULT 0,
   collection ENUM('advance','arrears') NOT NULL,
-  start_on DATE NOT NULL,
+  start_on DATE NOT NULL,                        -- seat/place held from here
+  bills_from DATE NOT NULL,                      -- = start_on, or the replaced subscription's next period (D4)
   end_on DATE NULL,                              -- planned end (package / leaving)
   status ENUM('active','ended','lapsed') NOT NULL DEFAULT 'active',
-  end_reason ENUM('left','unpaid','slot_change','admin') NULL,
+  end_reason ENUM('left','unpaid','slot_change','seat_change','admin') NULL,
   ended_at DATETIME NULL,
+  previous_subscription_id CHAR(36) NULL,        -- the subscription this one replaced
   created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
   UNIQUE KEY uq_subs_tenant_id (tenant_id, id),
   KEY ix_subs_member (member_id),
@@ -863,18 +865,23 @@ cellsForSlot({ startMin, endMin })   // → [12, 13, …, 23] for 06:00–12:00
 slotsOverlap(a, b)                   // → true if the cell sets intersect
 ```
 
-**Layer 1 — service check (friendly errors).** `allocations.service.allocateSeatForSlot`:
+**Layer 1 — service check (friendly errors).** `subscriptions` module
+(`lifecycle.startSubscription` → `placement.occupyPlace`):
 
 ```
 withTransaction(tx):
-  1. SELECT seat … FOR UPDATE           -- serialises every write on this seat
-     (must belong to ctx.tenantId and be active)
-  2. load ACTIVE allocations on the seat → filter slotsOverlap(target slot)
-     → if any: throw AppError(409, SEAT_SLOT_TAKEN, { conflicts: [who, slot] })
-  3. load member's other ACTIVE subscriptions → overlap → MEMBER_SLOT_OVERLAP
-  4. INSERT seat_allocations
-  5. INSERT seat_allocation_cells (one row per cell)
+  1. SELECT member … FOR UPDATE         -- one change per student at a time
+  2. SELECT slot … LOCK IN SHARE MODE   -- its times can't change meanwhile
+  3. SELECT seat … FOR UPDATE           -- serialises every write on this seat
+     (must belong to ctx.tenantId, be active, in an active fixed hall)
+  4. member's other ACTIVE subscriptions → overlap → MEMBER_SLOT_OVERLAP
+  5. ACTIVE allocations on the seat → slotsOverlap → SEAT_SLOT_TAKEN (names who)
+  6. INSERT subscriptions, seat_allocations
+  7. INSERT seat_allocation_cells (one row per cell)
 ```
+Lock order is always member → slot → seat/hall (two seats: lower id first), so
+concurrent changes queue instead of deadlocking. An integration test races five
+bookings for one seat: exactly one wins.
 
 **Layer 2 — database guard.** `seat_allocation_cells` has `PRIMARY KEY (seat_id, cell)`.
 If any code path (a bug, a race, a future feature) tries to give an overlapping slot
@@ -895,14 +902,18 @@ WHERE s.tenant_id = ? AND s.status = 'active'
 ```
 
 **Operations** (all in one transaction, all through the service):
-- **Seat change:** end allocation (`seat_change`), allocate new seat for same subscription.
-- **Swap A↔B:** lock both seats **in id order** (no deadlocks), end both allocations,
-  check each member's slot against the *other* seat ignoring the two being swapped,
-  create both new allocations + cells.
-- **Slot change:** end subscription (`slot_change`) and its allocation, create new
-  subscription + allocation (target seat must be free for the new slot). The new slot,
-  seat and price take effect from the **next billing period** [D4]; the seat is held
-  for the new slot from the moment of the change.
+- **Move (seat or hall change):** same category price → end the allocation
+  (`seat_change`) and allocate the new place for the same subscription. Different
+  price → handled like a slot change (below), so the new price starts next period
+  (extension of D4, to confirm with the owner).
+- **Swap A↔B:** lock both members, then both seats **in id order**, end both
+  allocations, then seat each student on the other's seat with the normal checks
+  (each side follows the move rule above).
+- **Slot change:** end the subscription (`slot_change`) and its allocation, start a new
+  subscription + allocation today (target place must be free for the new slot). Its
+  `bills_from` is the old subscription's next period start, so the new price applies
+  from the **next billing period** with no proration [D4]; the seat is held for the new
+  slot from the moment of the change. `previous_subscription_id` links them.
 - **Release:** end allocation + delete cells; subscription → `ended`/`lapsed`;
   notify the waitlist (§8.5).
 - **Editing a slot's times:** recompute cells for every active allocation of that
@@ -1169,20 +1180,22 @@ Lists support `?page=&pageSize=&q=`. Legend: **P** = public, **SA** = super_admi
 | PATCH, DELETE | /admin/tables/:id · POST /admin/tables/:id/seats | S:layout.manage |
 | PATCH, DELETE | /admin/seats/:id (label, category, features, disable) | S:layout.manage |
 | GET | /admin/seat-map?hallId=&slotId= | any staff |
-| GET | /admin/seats/available?slotId=&features= | S:seats.allocate |
+| GET | /admin/availability?slotId= (free seat ids; sit-anywhere halls: capacity/used/free) | any staff |
 | GET | /admin/seats/:id (current occupants per slot, history) | any staff |
-| GET, POST | /admin/slots · PATCH /admin/slots/:id · POST /admin/slots/:id/archive | S:slots.manage |
-| GET, POST | /admin/slots/:id/plans · PATCH /admin/plans/:id | S:slots.manage |
+| GET | /admin/slots (with plans and monthlyFeePaise) | any staff |
+| POST | /admin/slots (creates the default Monthly plan) · PATCH /admin/slots/:id (times, archive) | S:slots.manage |
+| POST | /admin/slots/:id/plans · PATCH /admin/plans/:id | S:slots.manage |
 | GET, POST | /admin/members (create = member + subscriptions + seats + joining invoices, one tx) | S:members.manage |
 | GET, PATCH | /admin/members/:id · POST /admin/members/:id/photo, /id-proof (multipart) | S:members.manage |
 | POST | /admin/members/:id/reset-password | S:members.manage |
 | GET | /admin/members/:id/id-proof (private file) | S:members.manage |
 | GET | /admin/members/:id/{subscriptions,invoices,payments,attendance,seat-history} | any staff |
-| POST | /admin/members/:id/subscriptions | S:seats.allocate |
-| POST | /admin/subscriptions/:id/change-seat `{seatId}` | S:seats.allocate |
-| POST | /admin/subscriptions/:id/change-slot `{slotId, planId, seatId, effective}` | S:seats.allocate |
-| POST | /admin/subscriptions/:id/end `{reason, endOn}` | S:seats.allocate |
-| POST | /admin/allocations/swap `{allocationA, allocationB}` | S:seats.allocate |
+| GET | /admin/subscriptions/:id | any staff |
+| POST | /admin/members/:id/subscriptions `{slotId, planId, seatId\|hallId, startOn?, collection?, lockerFeePaise?}` | S:seats.allocate |
+| POST | /admin/subscriptions/:id/move `{seatId\|hallId}` | S:seats.allocate |
+| POST | /admin/subscriptions/:id/change-slot `{slotId, planId, seatId\|hallId}` | S:seats.allocate |
+| POST | /admin/subscriptions/:id/end `{reason: left\|admin}` (today; future end dates: M5) | S:seats.allocate |
+| POST | /admin/subscriptions/swap `{subscriptionA, subscriptionB}` | S:seats.allocate |
 | GET, POST | /admin/waitlist · PATCH /admin/waitlist/:id · POST /admin/waitlist/:id/convert | S:members.manage |
 | GET | /admin/dues (who owes, ageing) · /admin/invoices?memberId= | any staff |
 | POST | /admin/invoices (manual "other" charge) · /admin/invoices/:id/void | S:payments.void |

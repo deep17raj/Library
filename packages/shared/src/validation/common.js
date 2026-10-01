@@ -1,5 +1,6 @@
 import { z } from "zod";
 import { toPaise } from "../money/paise.js";
+import { isDateKey } from "../time/zonedDate.js";
 
 // Building blocks reused by the per-form schemas. Messages are written for the
 // person filling the form, because they are shown next to the field as-is.
@@ -70,6 +71,9 @@ export const paiseField = z.coerce
   .int("Amount must be in whole paise")
   .min(0, "Cannot be negative")
   .max(100_000_000, "Amount is too large");
+
+/** A calendar date "YYYY-MM-DD" (library-local business date). */
+export const dateKeyField = z.string().refine(isDateKey, "Enter a valid date");
 
 export const sortOrderField = z.coerce.number().int().min(0).max(30000);
 
