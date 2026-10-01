@@ -12,7 +12,16 @@ const inLibraryWith = (permission) => (user) => inLibrary(user) && hasPermission
 export const NAV_GROUPS = [
   {
     label: "Today",
-    items: [{ to: "/dashboard", label: "Dashboard", icon: ICONS.dashboard, visible: inLibrary }],
+    items: [
+      { to: "/dashboard", label: "Dashboard", icon: ICONS.dashboard, visible: inLibrary },
+      { to: "/checkin", label: "Check-in desk", icon: ICONS.checkin, visible: inLibrary },
+      {
+        to: "/attendance",
+        label: "Attendance",
+        icon: ICONS.attendance,
+        visible: inLibraryWith(PERMISSIONS.ATTENDANCE_MANAGE),
+      },
+    ],
   },
   {
     label: "Students",

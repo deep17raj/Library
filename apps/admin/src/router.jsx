@@ -42,6 +42,14 @@ export const router = createBrowserRouter(
           path: "waitlist",
           lazy: page(() => import("./features/waitlist/WaitlistPage.jsx"), "WaitlistPage"),
         },
+        {
+          path: "checkin",
+          lazy: page(() => import("./features/attendance/CheckinDeskPage.jsx"), "CheckinDeskPage"),
+        },
+        {
+          path: "attendance",
+          lazy: page(() => import("./features/attendance/AttendancePage.jsx"), "AttendancePage"),
+        },
         { path: "dues", lazy: page(() => import("./features/billing/DuesPage.jsx"), "DuesPage") },
         {
           path: "payments",

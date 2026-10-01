@@ -2,6 +2,10 @@ import { Router } from "express";
 import { asyncHandler } from "./http/asyncHandler.js";
 import { createRequireStaff } from "./middleware/staffAuth.js";
 import { createRequireLibrary } from "./middleware/libraryContext.js";
+import {
+  createAttendanceRouter,
+  createPublicCheckinRouter,
+} from "./modules/attendance/attendance.routes.js";
 import { createAuthRouter } from "./modules/auth/auth.routes.js";
 import { createBillingRouter } from "./modules/billing/billing.routes.js";
 import { createExpensesRouter } from "./modules/expenses/expenses.routes.js";
@@ -43,6 +47,11 @@ export function createApiRouter({ db, config, services }) {
     createPlatformRouter({ platformService: services.platformService, requireStaff }),
   );
   router.use("/admin", requireStaff, requireLibrary, createAdminRouter(services));
+  // Public, per-library (resolved from the URL slug): the kiosk check-in. No staff session.
+  router.use(
+    "/s/:slug",
+    createPublicCheckinRouter({ attendanceService: services.attendanceService, db }),
+  );
   return router;
 }
 
@@ -59,5 +68,6 @@ function createAdminRouter(services) {
   admin.use(createSubscriptionsRouter(services));
   admin.use(createBillingRouter(services));
   admin.use(createLedgerRouter(services));
+  admin.use(createAttendanceRouter(services));
   return admin;
 }

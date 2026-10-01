@@ -5,6 +5,13 @@ Format: **date — area — what — why it was accepted — how to pay it off.*
 
 ## Known by design (from ARCHITECTURE.md)
 
+- **2026-10-01 — student-app check-in** — the desk QR encodes `/s/:slug/checkin?code=…`
+  and the `qr` method exists, but the student PWA that scans it (and the student
+  attendance view) is milestone 7. Until then check-in works via the phone **kiosk**
+  (`/api/s/:slug/kiosk/checkin`) and staff marking.
+- **2026-10-01 — check-in after check-out** — a third scan the same day reports "already
+  checked out" rather than re-opening the session (one in/out pair per booking per day).
+  Revisit if libraries want multiple sessions a day.
 - **2026-10-01 — rate limiting** — counters are in process memory. Fine for one
   Passenger process; if the app ever runs on more than one process, move them to MySQL.
 - **2026-10-01 — mock-test scoring** — multi-select questions are all-or-nothing; no

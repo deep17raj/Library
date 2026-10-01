@@ -138,6 +138,18 @@ export async function listMembersWithDues(db, tenantId, today) {
   );
 }
 
+/** How much one member owes that is already due on or before `today` (the check-in gate). */
+export async function overduePaiseOfMember(db, tenantId, memberId, today) {
+  const row = await queryOne(
+    db,
+    `SELECT COALESCE(SUM(amount_paise - discount_paise - paid_paise), 0) AS overduePaise
+       FROM invoices
+      WHERE tenant_id = ? AND member_id = ? AND status = 'open' AND due_on <= ?`,
+    [tenantId, memberId, today],
+  );
+  return Number(row?.overduePaise ?? 0);
+}
+
 /**
  * Every subscription with its billing terms (active ones, and ended ones — they may
  * still owe the period they used). Optionally for one member.

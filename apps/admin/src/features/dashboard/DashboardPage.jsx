@@ -21,6 +21,9 @@ export function DashboardPage() {
         description="Today at your library."
         actions={
           <>
+            <Button variant="secondary" icon={ICONS.checkin} onClick={() => navigate("/checkin")}>
+              Check-in desk
+            </Button>
             <Button variant="secondary" icon={ICONS.seatMap} onClick={() => navigate("/seat-map")}>
               Seat map
             </Button>

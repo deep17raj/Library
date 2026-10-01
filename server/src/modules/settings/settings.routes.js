@@ -7,6 +7,7 @@ import { requireFile, singleImageUpload } from "../../middleware/upload.js";
 import { createSettingsController } from "./settings.controller.js";
 import {
   billingSettingsSchema,
+  checkinSettingsSchema,
   librarySettingsSchema,
   LOGO_FIELD,
   LOGO_MAX_BYTES,
@@ -31,6 +32,12 @@ export function createSettingsRouter({ settingsService }) {
     canManage,
     validateBody(billingSettingsSchema),
     asyncHandler(controller.putBilling),
+  );
+  router.put(
+    "/checkin",
+    canManage,
+    validateBody(checkinSettingsSchema),
+    asyncHandler(controller.putCheckin),
   );
   router.post(
     "/logo",

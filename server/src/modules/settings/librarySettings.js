@@ -34,6 +34,22 @@ export async function billingSettings(db, tenantId) {
   };
 }
 
+/** The check-in rules attendance follows (Settings → Check-in). */
+export async function attendanceSettings(db, tenantId) {
+  const row = await queryOne(
+    db,
+    `SELECT timezone, slot_check_mode, slot_early_minutes, allow_overdue_checkin
+       FROM library_settings WHERE tenant_id = ?`,
+    [tenantId],
+  );
+  return {
+    timezone: row?.timezone || "Asia/Kolkata",
+    slotCheckMode: row?.slot_check_mode || "warn",
+    slotEarlyMinutes: row?.slot_early_minutes ?? 15,
+    allowOverdueCheckin: row ? Boolean(row.allow_overdue_checkin) : true,
+  };
+}
+
 /** "S" → member codes S1001, S1002… */
 export async function memberCodePrefix(db, tenantId) {
   const row = await queryOne(

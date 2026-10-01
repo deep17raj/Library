@@ -87,8 +87,8 @@ Always use these icons for these concepts. Size 16 in buttons/inline, 18 in nav,
 | Settings | `Settings` | Charge / invoice | `FileText` |
 | Libraries (platform) | `Building2` | Export CSV | `Download` |
 | Platform settings | `SlidersHorizontal` | Print | `Printer` |
-| Change password | `KeyRound` | Check-in (M6) | `ScanLine` / `QrCode` |
-| Sign out | `LogOut` | Attendance (M6) | `CalendarCheck` |
+| Change password | `KeyRound` | Check-in desk | `QrCode` |
+| Sign out | `LogOut` | Attendance / checked-in | `CalendarCheck` / `LogIn` |
 | Add | `Plus` | Notifications (M8) | `Bell` |
 | Edit | `Pencil` | Insights (M8) | `ChartColumn` |
 | Delete / void | `Trash2` / `Ban` | Mock tests (M9–10) | `GraduationCap` |
@@ -205,28 +205,17 @@ taken = brand, disabled = slate with strike-through. Always with a legend + coun
 | Halls & seats | Hall tabs; "Add tables" shows a preview of seat numbers before saving |
 | Slots & fees | Day timeline makes overlaps visible; each slot card lists its plans |
 | Staff | Permission checklist in plain words; permissions you lack are locked |
-| Settings | Profile, branding (live colour), billing rules with an example of what each choice means |
+| Settings | Profile, branding (live colour), billing rules and check-in rules, each choice with an example of what it means |
+| Collect payment (dialog) | Amount pre-filled with what's due; payment-mode `SegmentedControl` with icons; reference only for non-cash; "what it clears" preview; success toast with receipt no. + Print |
+| Dues | Total overdue as a stat; ageing buckets (0–7, 8–30, 30+) as a `SegmentedControl`; each row has Collect |
+| Payments | Date range + mode filter; totals and by-mode at top; receipt and void per row; CSV |
+| Receipt | Printable, thermal-friendly; logo/name/address, receipt no., what was paid for, balance after; VOID watermark when voided |
+| Expenses | Month view, category stats, add dialog (category + mode), void (never delete) |
+| Day ledger | Date stepper (‹ today ›); collected/spent by mode; **Cash in hand** as the hero card |
+| Check-in desk | Two cards: the QR + today's code in large mono digits + present count; a phone box that sends the on-screen code. Result as a green/amber/red `Alert` (welcome / outside slot / dues) |
+| Attendance | Date stepper + slot `SegmentedControl`; present count stat; rows show slot/seat, in/out times, Outside-slot and Dues badges; "Mark present" searches students; CSV |
 
 ## 11. Screen notes — still to build (follow these)
-
-**Money (milestone 5)**
-- *Collect payment* dialog: amount pre-filled with what's due; payment-mode
-  `SegmentedControl` with icons (Cash, UPI, Card, Bank, Cheque); reference field only
-  for non-cash; shows which dues it will clear ("Clears Oct fee, part of Nov");
-  success toast with receipt number + "Print" action.
-- *Dues*: total overdue as a red stat; ageing buckets (0–7, 8–30, 30+ days) as
-  filter chips; each row has "Collect".
-- *Payments*: date range + mode filter; total at top; receipt and void per row.
-- *Receipt*: printable A5/thermal-friendly page, library logo/name/address, receipt
-  no., member, what was paid for, mode, balance after; `Printer` button.
-- *Expenses*: month view, category chips, add dialog with category + mode.
-- *Day ledger*: date stepper (‹ today ›); cards: collected by mode, spent by mode,
-  deposits in/out, net; "Cash in hand" emphasised.
-
-**Check-in & attendance (milestone 6)**
-- Desk screen: full-screen QR + today's code in huge digits, library logo, clock;
-  kiosk mode with a numeric keypad for phone check-in; result screen green
-  (welcome + seat) / amber (outside slot) / red (dues) for 3 s, then resets.
 
 **Student app (milestone 7)**
 - Home: greeting, "Your seat today" card (seat, slot, time left), next-due card with

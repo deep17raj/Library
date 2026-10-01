@@ -1,3 +1,4 @@
+import { createAttendanceService } from "./modules/attendance/attendance.service.js";
 import { createAuthService } from "./modules/auth/auth.service.js";
 import { createBillingService } from "./modules/billing/billing.service.js";
 import { createExpensesService } from "./modules/expenses/expenses.service.js";
@@ -41,5 +42,11 @@ export function buildServices({ db, config }) {
     billingService,
     expensesService,
     ledgerService: createLedgerService({ db, billing: billingService, expenses: expensesService }),
+    // Check-in applies the slot and dues gates; the dues gate reads billing.
+    attendanceService: createAttendanceService({
+      db,
+      billing: billingService,
+      secret: config.auth.jwtSecret,
+    }),
   };
 }

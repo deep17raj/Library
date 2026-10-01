@@ -10,6 +10,9 @@ export function createSettingsController({ settingsService }) {
     async putBilling(req, res) {
       res.json({ settings: await settingsService.updateBilling(req.ctx, req.body) });
     },
+    async putCheckin(req, res) {
+      res.json({ settings: await settingsService.updateCheckin(req.ctx, req.body) });
+    },
     async postLogo(req, res) {
       res.json({ settings: await settingsService.replaceLogo(req.ctx, req.file.buffer) });
     },

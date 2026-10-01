@@ -26,7 +26,7 @@ export function createSettingsService({
 }) {
   return bindDeps(
     { db, storageDir, repo, audit, files },
-    { getSettings, updateSettings, updateBilling, replaceLogo, removeLogo },
+    { getSettings, updateSettings, updateBilling, updateCheckin, replaceLogo, removeLogo },
   );
 }
 
@@ -69,6 +69,22 @@ async function updateBilling(deps, ctx, values) {
     await deps.audit.recordAudit(
       tx,
       byUser(ctx.actor, "settings.billing", "library", ctx.tenantId, values),
+    );
+  });
+  return getSettings(deps, ctx);
+}
+
+/**
+ * Check-in rules (slot-time gate and dues gate). They take effect on the next check-in.
+ * @param {SettingsDeps} deps
+ */
+async function updateCheckin(deps, ctx, values) {
+  await loadSettings(deps, ctx.tenantId);
+  await withTransaction(deps.db, async (tx) => {
+    await deps.repo.updateCheckin(tx, ctx.tenantId, values);
+    await deps.audit.recordAudit(
+      tx,
+      byUser(ctx.actor, "settings.checkin", "library", ctx.tenantId, values),
     );
   });
   return getSettings(deps, ctx);

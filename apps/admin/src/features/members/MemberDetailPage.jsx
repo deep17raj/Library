@@ -6,6 +6,7 @@ import { Alert, Badge, Button, Card, PageHeader, SectionCard, Skeleton } from "@
 import { ICONS } from "../../app/icons.js";
 import { useCan } from "../../app/permissions.js";
 import { useToday } from "../../app/useToday.js";
+import { MemberAttendanceCard } from "../attendance/components/MemberAttendanceCard.jsx";
 import { AccountCard } from "../billing/components/AccountCard.jsx";
 import { AddBookingDialog } from "../seating/components/BookingDialogs.jsx";
 import { BookingList } from "../seating/components/BookingList.jsx";
@@ -90,6 +91,7 @@ export function MemberDetailPage() {
             today={today}
             autoCollect={Boolean(location.state?.collect)}
           />
+          <MemberAttendanceCard memberId={member.id} />
           <SeatHistoryCard history={seatHistory} />
         </div>
       </div>

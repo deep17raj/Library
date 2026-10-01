@@ -2,6 +2,7 @@ import { Alert, PageHeader, Skeleton } from "@app/shared/ui";
 import { ICONS } from "../../app/icons.js";
 import { useLibrarySettings } from "./api.js";
 import { BillingRulesCard } from "./components/BillingRulesCard.jsx";
+import { CheckinRulesCard } from "./components/CheckinRulesCard.jsx";
 import { LogoCard } from "./components/LogoCard.jsx";
 import { ProfileForm } from "./components/ProfileForm.jsx";
 
@@ -12,7 +13,7 @@ export function SettingsPage() {
       <PageHeader
         icon={ICONS.settings}
         title="Settings"
-        description="Your library's details, branding and billing rules."
+        description="Your library's details, branding, billing and check-in rules."
       />
       {isLoading && <Skeleton rows={3} />}
       <Alert tone="error">{error?.message}</Alert>
@@ -23,6 +24,7 @@ export function SettingsPage() {
             <LogoCard settings={settings} />
           </div>
           <BillingRulesCard settings={settings} />
+          <CheckinRulesCard settings={settings} />
         </div>
       )}
     </>

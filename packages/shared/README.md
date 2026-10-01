@@ -9,6 +9,7 @@ both need it, it lives here.
 | `money/` | Integer-paise helpers: parse rupee input, format for display, sum. |
 | `time/` | Library-timezone helpers: "what is today's date in this library". |
 | `slots/` | Slot time maths in 30-minute cells: overlap, overnight wrap, in-slot check, sit-anywhere capacity; clock formatting. |
+| `attendance/` | `evaluateCheckin` — which booking a check-in belongs to and whether the time is allowed (off/warn/block). |
 | `billing/` | `subscriptionPrice` (plan + category surcharge), billing periods, `plannedInvoices` (which fee invoices a booking owes, first-month proration), dues (`summariseDues`, `ageingBucket`, `invoiceBalance`) and `planAllocation` (which invoices a payment clears). |
 | `layout/` | Seat/table numbering for bulk adds (`planTablesWithSeats`, `nextSeatNumber`). |
 | `theme/` | `brandPalette(hex)` — one brand colour → the shades both apps use. |

@@ -56,9 +56,20 @@ export function createBillingService({
       refundDeposit: async (deps, ctx, invoiceId, input) =>
         getMemberAccount(deps, ctx, await refundDeposit(deps, ctx, invoiceId, input)),
       listDues,
+      memberOverduePaise,
       syncLibraryInvoices,
       syncMemberInvoices,
       createJoiningInvoices,
     },
   );
+}
+
+/**
+ * How much a member owes that is already due — the check-in dues gate (§9). A fast read,
+ * so it does not generate invoices; the next account view or the hourly job does that.
+ * @param {import("./billing.service.js").BillingDeps} deps
+ */
+async function memberOverduePaise(deps, ctx, memberId) {
+  const today = await deps.calendar.today(deps.db, ctx.tenantId);
+  return deps.invoices.overduePaiseOfMember(deps.db, ctx.tenantId, memberId, today);
 }

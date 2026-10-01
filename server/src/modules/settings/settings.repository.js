@@ -21,6 +21,11 @@ function toSettings(row) {
       graceDays: row.grace_days,
       autoReleaseUnpaid: Boolean(row.auto_release_unpaid),
     },
+    checkin: {
+      slotCheckMode: row.slot_check_mode,
+      slotEarlyMinutes: row.slot_early_minutes,
+      allowOverdueCheckin: Boolean(row.allow_overdue_checkin),
+    },
   };
 }
 
@@ -75,5 +80,16 @@ export async function updateBilling(db, tenantId, values) {
       values.autoReleaseUnpaid ? 1 : 0,
       tenantId,
     ],
+  );
+}
+
+/** @param {import("@app/shared/validation").checkinSettingsSchema["_output"]} values */
+export async function updateCheckin(db, tenantId, values) {
+  await execute(
+    db,
+    `UPDATE library_settings
+        SET slot_check_mode = ?, slot_early_minutes = ?, allow_overdue_checkin = ?
+      WHERE tenant_id = ?`,
+    [values.slotCheckMode, values.slotEarlyMinutes, values.allowOverdueCheckin ? 1 : 0, tenantId],
   );
 }

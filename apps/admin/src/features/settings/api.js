@@ -41,3 +41,6 @@ export const useRemoveLogo = () => useSettingsMutation(() => api.delete("/admin/
 
 export const useSaveBillingRules = () =>
   useSettingsMutation((values) => api.put("/admin/settings/billing", values));
+
+export const useSaveCheckinRules = () =>
+  useSettingsMutation((values) => api.put("/admin/settings/checkin", values));

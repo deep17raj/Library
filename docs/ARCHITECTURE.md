@@ -1007,7 +1007,7 @@ dues list groups members into ageing buckets (0–7, 8–30, 30+ days overdue).
 ### 8.4 Ledger & insights
 - **Day ledger:** for a local date — collected, spent and refunded by mode, deposits in,
   earned (collected − deposits), net, and **cash in hand** (cash in − cash out).
-- **CSV export** for payments, expenses, dues, members (attendance in M6): UTF-8 BOM so
+- **CSV export** for payments, expenses, dues, members and attendance: UTF-8 BOM so
   Excel reads ₹ and Hindi names, formula-injection safe (`server/src/lib/csv.js`).
 - **Dashboard** (`GET /admin/dashboard`): collected today, owed now, longest overdue,
   active students and bookings, waiting list, bookings per slot.
@@ -1034,18 +1034,28 @@ Passenger may sleep an idle process, so `POST /api/internal/jobs/run` with
 
 ## 9. Attendance & check-in
 
+The slot and dues rules below come from **Settings → Check-in** (`slot_check_mode`,
+`slot_early_minutes`, `allow_overdue_checkin`); shared logic is `evaluateCheckin`.
+
+- **Daily code:** a 6-character code (no 0/O/1/I) = `HMAC(jwtSecret, tenant + local date)`
+  (`lib/dailyCode.js`), never stored, rotating each library-local day.
 - **QR:** the desk screen (admin app, "Check-in desk") shows a QR of
-  `/s/<slug>/checkin?code=<daily code>`; the logged-in student scans it in the app.
-  The daily code is `HMAC(secret, tenant + local date)` — never stored.
-- **Phone:** kiosk mode on the desk screen — phone number + daily code (rate-limited,
-  failure counter cleared on success).
-- **Staff:** mark attendance manually (`attendance.manage`).
-- **Slot check** (`isWithinSlot` in shared, using library timezone): find the member's
-  active subscription whose slot contains *now* (allowing `slot_early_minutes`).
-  None → `slot_check_mode`: `off` record it, `warn` record with `outside_slot = 1` and
-  show a warning, `block` refuse with `OUTSIDE_SLOT` (message names their slot times).
-- **Dues check:** if overdue and `allow_overdue_checkin = 0` → refuse with `DUES_OVERDUE`.
-- Second scan on the same day → check-out (sets `check_out_at`).
+  `/s/<slug>/checkin?code=<daily code>`, generated in the browser. The student-app scan
+  of it (method `qr`) lands in milestone 7; the code route exists now.
+- **Phone:** kiosk on the desk — phone + the code shown on screen (public
+  `/api/s/:slug/kiosk/checkin`, rate-limited per IP+phone, a wrong code and an unknown
+  phone give the same message).
+- **Staff:** mark a walk-in present (`attendance.manage`) — overrides the slot and dues
+  gates but still stores the flags.
+- **Slot check** (`isWithinSlot`, library timezone): the active booking whose slot
+  contains *now* (allowing `slot_early_minutes`). Outside every slot it picks the nearest
+  and, per `slot_check_mode`: `off`/`warn` record it (`outside_slot = 1` under `warn`),
+  `block` refuse with `OUTSIDE_SLOT` (message names the slot times). No active booking →
+  `NO_ACTIVE_BOOKING`.
+- **Dues check:** if money is already due and `allow_overdue_checkin = 0` → refuse with
+  `DUES_OVERDUE` (a fast read; check-in never generates invoices).
+- Second check-in the same day → check-out (`check_out_at`); the unique key
+  `(subscription_id, local_date)` is the DB guard.
 
 ## 10. Mock tests
 
@@ -1215,7 +1225,7 @@ Lists support `?page=&pageSize=&q=`. Legend: **P** = public, **SA** = super_admi
 | PATCH | /admin/members/:id · POST, DELETE /admin/members/:id/photo · POST /admin/members/:id/id-proof (multipart) | S:members.manage |
 | POST | /admin/members/:id/reset-password (student app login, M7) | S:members.manage |
 | GET | /admin/members/:id/id-proof (private file) | S:members.manage |
-| GET | /admin/members/:id/attendance (M6); invoices and payments come from /admin/members/:memberId/account | any staff |
+| GET | /admin/members/:id/attendance?month= · invoices and payments come from /admin/members/:memberId/account | any staff |
 | GET | /admin/subscriptions/:id | any staff |
 | POST | /admin/members/:id/subscriptions `{slotId, planId, seatId\|hallId, startOn?, collection?, lockerFeePaise?}` | S:seats.allocate |
 | POST | /admin/subscriptions/:id/move `{seatId\|hallId}` | S:seats.allocate |
@@ -1234,11 +1244,11 @@ Lists support `?page=&pageSize=&q=`. Legend: **P** = public, **SA** = super_admi
 | GET, POST | /admin/expenses?from=&to= · POST /admin/expenses/:id/void | S:expenses.manage |
 | GET | /admin/ledger?date= | S:payments.collect |
 | GET | /admin/dashboard | any staff |
-| PUT | /admin/settings/billing (anchor, first period, collection, grace days) | S:settings.manage |
-| GET | /admin/attendance?date=&slotId= · POST /admin/attendance (manual) | S:attendance.manage |
-| GET | /admin/checkin/desk (today's code + QR URL) | any staff |
+| PUT | /admin/settings/billing (anchor, first period, collection, grace days) · /admin/settings/checkin (slot mode, early minutes, dues gate) | S:settings.manage |
+| GET | /admin/attendance?date=&slotId= · POST /admin/attendance `{memberId, subscriptionId?}` (manual) · GET /admin/export/attendance.csv | S:attendance.manage |
+| GET | /admin/checkin/desk (today's code, QR target, present count) | any staff |
 | GET | /admin/insights/{occupancy,revenue,dues,churn,attendance,mocktests} | S:insights.view |
-| GET | /admin/export/payments.csv, dues.csv (S:payments.collect) · expenses.csv (S:expenses.manage) · members.csv (S:members.manage) · attendance.csv (M6) | as listed |
+| GET | /admin/export/payments.csv, dues.csv (S:payments.collect) · expenses.csv (S:expenses.manage) · members.csv (S:members.manage) · attendance.csv (S:attendance.manage) | as listed |
 | GET | /admin/notifications · POST /admin/notifications (announce) ⏱ | S:notifications.send |
 | GET | /admin/notifications/preview?audience= (recipient count) | S:notifications.send |
 | GET | /admin/mocktests/sales (own students, share owed) | S:mocktests.view |
@@ -1248,8 +1258,8 @@ Lists support `?page=&pageSize=&q=`. Legend: **P** = public, **SA** = super_admi
 |---|---|---|
 | POST | /s/:slug/auth/login ⏱ · /logout · /password | P / ST |
 | GET | /s/:slug/me (profile, subscriptions + seats + slots, dues card) | ST |
-| POST | /s/:slug/checkin ⏱ `{code}` (QR) | ST |
-| POST | /s/:slug/kiosk/checkin ⏱ `{phone, code}` | P |
+| POST | /s/:slug/kiosk/checkin ⏱ `{phone, code}` — **built (M6)**, public, no session | P |
+| POST | /s/:slug/checkin ⏱ `{code}` (student-app QR, M7) | ST |
 | GET | /s/:slug/attendance?month= | ST |
 | GET | /s/:slug/invoices · /s/:slug/payments · /s/:slug/payments/:id/receipt | ST |
 | GET | /s/:slug/notifications · POST /s/:slug/notifications/:id/read | ST |
@@ -1352,7 +1362,7 @@ summary + manual test list.
 | 3 | **Slots & allocation rules:** slots + plans, `slotCells`, pricing (plan + surcharge), allocation service with cell guard, floating-hall capacity, swap/change/release service + tests (incl. concurrent DB test). | All overlap/capacity tests pass; API rejects Morning + Full Day on one seat. |
 | 4 | **Members & seat map:** add/edit member (multi slot + seat picker), uploads, member detail, seat map, seat panel actions, waitlist. | Two students share A-12 Morning/Evening; seat map shows it; swap works. |
 | 5 | **Money:** invoice generation, payments with allocation, partial/credit, receipts, void, deposits & refunds, dues screen, expenses, day ledger, CSV, jobs scheduler. | Billing tests pass; partial payment leaves correct dues; ledger matches. |
-| 6 | **Check-in & attendance:** daily code, desk QR/kiosk, slot-time check (off/warn/block), dues gate, check-out, attendance screens. | Check-in outside slot warns/blocks per setting. |
+| 6 ✅ | **Check-in & attendance:** daily code, desk QR/kiosk, slot-time check (off/warn/block), dues gate, check-out, attendance screens. | Check-in outside slot warns/blocks per setting. |
 | 7 | **Student app:** login + password change, home, my seat, check-in scan, attendance, fees & receipts, PWA install with per-library manifest, push subscribe. | Student installs app on Android, checks in by QR. |
 | 8 | **Notifications & insights:** announcements, inbox, fee-due / seat-expiry / waitlist automations, auto-release job, dashboard + insights. | Reminder arrives once (deduped); occupancy % correct. |
 | 9 | **Mock-test content:** platform editor, sections/questions, CSV/XLSX import with preview, publish rules, student preview. | Import 100-question CSV; errors shown per row. |

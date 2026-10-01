@@ -14,7 +14,8 @@
     "./layout": "./src/layout/index.js",
     "./theme": "./src/theme/index.js",
     "./slots": "./src/slots/index.js",
-    "./billing": "./src/billing/index.js"
+    "./billing": "./src/billing/index.js",
+    "./attendance": "./src/attendance/index.js"
   },
   "scripts": {
     "test": "node --test"
