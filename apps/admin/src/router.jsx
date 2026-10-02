@@ -107,6 +107,13 @@ export const router = createBrowserRouter(
           ),
         },
         {
+          path: "platform/mock-tests",
+          lazy: page(
+            () => import("./features/platform-mock-tests/MockTestsPage.jsx"),
+            "MockTestsPage",
+          ),
+        },
+        {
           path: "platform/settings",
           lazy: page(
             () => import("./features/platform-settings/PlatformSettingsPage.jsx"),

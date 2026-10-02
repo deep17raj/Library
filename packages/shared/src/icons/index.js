@@ -19,6 +19,7 @@ import {
   ChevronRight,
   CircleDollarSign,
   CircleUserRound,
+  ClipboardList,
   Clock,
   CreditCard,
   Download,
@@ -117,6 +118,7 @@ export const ICONS = Object.freeze({
   notifications: Bell,
   notificationsOff: BellOff,
   insights: TrendingUp,
+  mockTest: ClipboardList,
   installApp: Smartphone,
   location: MapPin,
 });

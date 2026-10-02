@@ -8,6 +8,7 @@ import { createMembersService } from "./modules/members/members.service.js";
 import { createPlatformService } from "./modules/platform/platform.service.js";
 import { createPortalService } from "./modules/portal/portal.service.js";
 import { createInsightsService } from "./modules/insights/insights.service.js";
+import { createMockTestsService } from "./modules/mock-tests/mock-tests.service.js";
 import { createNotificationsService } from "./modules/notifications/notifications.service.js";
 import { createPushService } from "./modules/push/push.service.js";
 import { createSettingsService } from "./modules/settings/settings.service.js";
@@ -66,5 +67,6 @@ export function buildServices({ db, config }) {
     pushService,
     notificationsService: createNotificationsService({ db, push: pushService }),
     insightsService: createInsightsService({ db }),
+    mockTestsService: createMockTestsService({ db, storageDir: config.storageDir }),
   };
 }

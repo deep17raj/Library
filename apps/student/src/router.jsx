@@ -37,6 +37,10 @@ export const router = createBrowserRouter(
           lazy: page(() => import("./features/fees/ReceiptPage.jsx"), "ReceiptPage"),
         },
         {
+          path: "tests/:id",
+          lazy: page(() => import("./features/mock-tests/TestPreviewPage.jsx"), "TestPreviewPage"),
+        },
+        {
           path: "notifications",
           lazy: page(
             () => import("./features/notifications/NotificationsPage.jsx"),

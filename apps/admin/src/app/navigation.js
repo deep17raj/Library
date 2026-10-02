@@ -101,6 +101,12 @@ export const NAV_GROUPS = [
         visible: isSuperAdmin,
       },
       {
+        to: "/platform/mock-tests",
+        label: "Mock tests",
+        icon: ICONS.mockTest,
+        visible: isSuperAdmin,
+      },
+      {
         to: "/platform/settings",
         label: "Platform settings",
         icon: ICONS.platformSettings,

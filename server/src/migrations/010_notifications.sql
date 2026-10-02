@@ -18,7 +18,7 @@ CREATE TABLE IF NOT EXISTS notifications (
   UNIQUE KEY uq_notif_dedupe (tenant_id, dedupe_key),
   KEY ix_notif_tenant_time (tenant_id, created_at),
   CONSTRAINT fk_notif_library FOREIGN KEY (tenant_id) REFERENCES libraries(id) ON DELETE CASCADE
-);
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
 CREATE TABLE IF NOT EXISTS notification_recipients (
   notification_id CHAR(36) NOT NULL,
@@ -29,4 +29,4 @@ CREATE TABLE IF NOT EXISTS notification_recipients (
   KEY ix_inbox (member_id, notification_id),
   CONSTRAINT fk_nr_notif FOREIGN KEY (tenant_id, notification_id) REFERENCES notifications(tenant_id, id) ON DELETE CASCADE,
   CONSTRAINT fk_nr_member FOREIGN KEY (tenant_id, member_id) REFERENCES members(tenant_id, id) ON DELETE CASCADE
-);
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;

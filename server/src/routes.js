@@ -19,6 +19,10 @@ import { findLibraryById, findLibraryBySlug } from "./modules/platform/platform.
 import { createPortalPublicRouter, createPortalRouter } from "./modules/portal/portal.routes.js";
 import { createInsightsRouter } from "./modules/insights/insights.routes.js";
 import {
+  createMockTestsPlatformRouter,
+  createMockTestsStudentRouter,
+} from "./modules/mock-tests/mock-tests.routes.js";
+import {
   createNotificationsAdminRouter,
   createNotificationsStudentRouter,
 } from "./modules/notifications/notifications.routes.js";
@@ -60,6 +64,11 @@ export function createApiRouter({ db, config, services }) {
     "/platform",
     createPlatformRouter({ platformService: services.platformService, requireStaff }),
   );
+  router.use(
+    "/platform",
+    requireStaff,
+    createMockTestsPlatformRouter({ mockTestsService: services.mockTestsService }),
+  );
   router.use("/admin", requireStaff, requireLibrary, createAdminRouter(services));
   router.use("/push", createPushPublicRouter(services));
   router.use("/s/:slug", createStudentApiRouter({ db, config, services }));
@@ -85,6 +94,7 @@ function createStudentApiRouter({ db, config, services }) {
   student.use(createPortalRouter(services));
   student.use(createPushRouter(services));
   student.use(createNotificationsStudentRouter(services));
+  student.use(createMockTestsStudentRouter(services));
   return student;
 }
 
