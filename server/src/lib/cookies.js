@@ -19,19 +19,22 @@ export function readCookies(req) {
 /**
  * HttpOnly so page scripts can't read the session; SameSite=Lax so other sites
  * can't send it on their forms (the X-Requested-With check covers the rest).
+ * `path` scopes a cookie to part of the site: student sessions use /api/s/<slug>,
+ * so signing in to a second library's app doesn't sign you out of the first.
  * @param {import("express").Response} res
- * @param {{ name: string, value: string, maxAgeSeconds: number, secure: boolean }} cookie
+ * @param {{ name: string, value: string, maxAgeSeconds: number, secure: boolean,
+ *   path?: string }} cookie
  */
-export function setSessionCookie(res, { name, value, maxAgeSeconds, secure }) {
+export function setSessionCookie(res, { name, value, maxAgeSeconds, secure, path = "/" }) {
   res.cookie(name, value, {
     httpOnly: true,
     sameSite: "lax",
     secure,
-    path: "/",
+    path,
     maxAge: maxAgeSeconds * 1000,
   });
 }
 
-export function clearSessionCookie(res, { name, secure }) {
-  res.clearCookie(name, { httpOnly: true, sameSite: "lax", secure, path: "/" });
+export function clearSessionCookie(res, { name, secure, path = "/" }) {
+  res.clearCookie(name, { httpOnly: true, sameSite: "lax", secure, path });
 }

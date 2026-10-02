@@ -46,3 +46,8 @@ export function byUser(actor, action, entity, entityId, data) {
     data,
   };
 }
+
+/** Audit entry for something a signed-in student did in the student app. */
+export function byMember(tenantId, memberId, action, entity, entityId, data) {
+  return { tenantId, actorType: "member", actorId: memberId, action, entity, entityId, data };
+}

@@ -90,13 +90,17 @@ export async function listForDay(db, tenantId, localDate, slotId = null) {
 
 /** A member's attendance between two dates (inclusive) — the member page calendar. */
 export async function listForMemberRange(db, tenantId, memberId, from, to) {
+  // `absent` = staff overrode this check-in on the roster; the row stays as history.
   const rows = await queryAll(
     db,
-    `${SELECT_ATTENDANCE} WHERE a.tenant_id = ? AND a.member_id = ? AND a.local_date BETWEEN ? AND ?
-      ORDER BY a.local_date DESC, a.check_in_at DESC`,
+    `SELECT x.*, (ab.id IS NOT NULL) AS marked_absent FROM (${SELECT_ATTENDANCE}
+       WHERE a.tenant_id = ? AND a.member_id = ? AND a.local_date BETWEEN ? AND ?) x
+       LEFT JOIN attendance_absences ab
+         ON ab.subscription_id = x.subscription_id AND ab.local_date = x.local_date
+      ORDER BY x.local_date DESC, x.check_in_at DESC`,
     [tenantId, memberId, from, to],
   );
-  return rows.map(toAttendance);
+  return rows.map((row) => ({ ...toAttendance(row), absent: Boolean(row.marked_absent) }));
 }
 
 /** How many distinct members were present on a day (desk screen counter). */

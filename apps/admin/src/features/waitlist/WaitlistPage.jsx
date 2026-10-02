@@ -16,7 +16,7 @@ import { useCan } from "../../app/permissions.js";
 import { useSlots } from "../slots/api.js";
 import { useUpdateWaitlistEntry, useWaitlist } from "./api.js";
 import { AddWaitlistDialog } from "./components/AddWaitlistDialog.jsx";
-import { ICONS } from "../../app/icons.js";
+import { ICONS } from "@app/shared/icons";
 
 const STATUS_TONE = { waiting: "amber", offered: "green", converted: "slate", cancelled: "red" };
 

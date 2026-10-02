@@ -15,7 +15,7 @@ import { useCan } from "../../app/permissions.js";
 import { useSlots } from "../slots/api.js";
 import { useMembers } from "./api.js";
 import { MemberAvatar } from "./components/MemberAvatar.jsx";
-import { ICONS } from "../../app/icons.js";
+import { ICONS } from "@app/shared/icons";
 
 const STATUS_OPTIONS = [
   { value: "active", label: "Active" },

@@ -8,7 +8,7 @@ import { FloatingHallView } from "./components/FloatingHallView.jsx";
 import { SeatGrid } from "./components/SeatGrid.jsx";
 import { SeatPanel } from "./components/SeatPanel.jsx";
 import { SlotFilter } from "./components/SlotFilter.jsx";
-import { ICONS } from "../../app/icons.js";
+import { ICONS } from "@app/shared/icons";
 
 /** Who sits where: one hall at a time, filtered to a slot (or the whole day). */
 export function SeatMapPage() {

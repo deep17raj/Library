@@ -2,7 +2,7 @@ import { Link, useNavigate } from "react-router-dom";
 import { formatRupees } from "@app/shared/money";
 import { displaySlotTimes } from "@app/shared/slots";
 import { Alert, Button, PageHeader, SectionCard, Skeleton, StatCard } from "@app/shared/ui";
-import { ICONS } from "../../app/icons.js";
+import { ICONS } from "@app/shared/icons";
 import { useSession } from "../../app/session.js";
 import { useDashboard } from "../ledger/api.js";
 

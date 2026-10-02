@@ -6,7 +6,7 @@ import { useLayout } from "./api.js";
 import { CategoriesCard } from "./components/CategoriesCard.jsx";
 import { HallDialog } from "./components/HallDialog.jsx";
 import { HallView } from "./components/HallView.jsx";
-import { ICONS } from "../../app/icons.js";
+import { ICONS } from "@app/shared/icons";
 
 /** Layout editor: seat categories, then one tab per hall with its tables and seats. */
 export function LayoutPage() {

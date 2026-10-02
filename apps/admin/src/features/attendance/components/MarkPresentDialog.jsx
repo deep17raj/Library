@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { Button, Dialog, TextField, useToast } from "@app/shared/ui";
-import { ICONS } from "../../../app/icons.js";
+import { ICONS } from "@app/shared/icons";
 import { useMembers } from "../../members/api.js";
 import { useMarkAttendance } from "../api.js";
 

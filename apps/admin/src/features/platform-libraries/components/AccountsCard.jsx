@@ -5,7 +5,7 @@ import { Alert, Button, Card } from "@app/shared/ui";
 import { useSetUserStatus } from "../api.js";
 import { AddOwnerDialog } from "./AddOwnerDialog.jsx";
 import { StatusBadge } from "../../../app/StatusBadge.jsx";
-import { ICONS } from "../../../app/icons.js";
+import { ICONS } from "@app/shared/icons";
 
 /** Owner and staff logins of a library; the super admin can add owners and disable logins. */
 export function AccountsCard({ library }) {

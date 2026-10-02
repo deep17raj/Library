@@ -5,7 +5,7 @@ import { useLayoutAction } from "../api.js";
 import { AddSeatsDialog } from "./AddSeatsDialog.jsx";
 import { RenameTableDialog } from "./RenameTableDialog.jsx";
 import { SeatDialog } from "./SeatDialog.jsx";
-import { ICONS } from "../../../app/icons.js";
+import { ICONS } from "@app/shared/icons";
 
 /** A table with its seat chips; clicking a seat opens its editor. */
 export function TableCard({ table, hall, layout, canEdit }) {

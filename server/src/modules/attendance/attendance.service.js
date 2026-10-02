@@ -161,7 +161,12 @@ async function listRoster(deps, ctx, { date, slotId }) {
   const members = bookings.map((b) => {
     const present = presentBySub.get(b.subscriptionId);
     const status = absentIds.has(b.subscriptionId) ? "absent" : present ? "present" : "unmarked";
-    return { ...b, status, checkInAt: present?.checkInAt ?? null, checkOutAt: present?.checkOutAt ?? null };
+    return {
+      ...b,
+      status,
+      checkInAt: present?.checkInAt ?? null,
+      checkOutAt: present?.checkOutAt ?? null,
+    };
   });
   return { date: day, members };
 }

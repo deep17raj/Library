@@ -23,7 +23,7 @@ process serves the API and both apps).
 
 ```
 apps/admin/      React admin app (owner, staff, super admin "Platform" area)
-apps/student/    React student PWA
+apps/student/    React student PWA (one build, served per library at /s/<slug>/)
 packages/shared/ code used by both apps AND the server: constants, validation
                  schemas, money/time/billing/slot/scoring helpers, API client, UI primitives
 server/          Express API
@@ -72,7 +72,7 @@ Server state via TanStack Query hooks inside the feature; no app-wide data store
   concept's icon + one-line description, one primary action, teaching empty state,
   loading/error states, success toast after saves, `useConfirm` (never
   `window.confirm`) for destructive actions, money/dates via shared helpers.
-- Icons come from lucide-react via the icon dictionary (`apps/admin/src/app/icons.js`);
+- Icons come from lucide-react via the icon dictionary (`@app/shared/icons`, used by both apps);
   one concept = one icon = one word everywhere. Screens say "booking", not "subscription".
 - Use the shared components (`@app/shared/ui`) instead of one-off markup; add a new
   shared component (and a line in UI-GUIDE §5) rather than styling the same thing twice.
@@ -120,4 +120,5 @@ npm run verify         lint + test + build — must pass before a commit
 
 Local setup: copy `.env.example` to `.env`. Set `TEST_DATABASE_URL` (database name
 ending in `_test`, it is dropped on every run) so the MySQL integration tests run.
-How server modules are written: `server/README.md`. Admin app layout: `apps/admin/README.md`.
+How server modules are written: `server/README.md`. App layouts: `apps/admin/README.md`,
+`apps/student/README.md`.

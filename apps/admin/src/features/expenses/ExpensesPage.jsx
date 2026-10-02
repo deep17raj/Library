@@ -16,7 +16,7 @@ import {
   useToast,
 } from "@app/shared/ui";
 import { downloadFile } from "../../app/download.js";
-import { ICONS } from "../../app/icons.js";
+import { ICONS } from "@app/shared/icons";
 import { useToday } from "../../app/useToday.js";
 import { VoidDialog } from "../billing/components/MoneyDialogs.jsx";
 import { useExpenses, useVoidExpense } from "./api.js";

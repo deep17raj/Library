@@ -9,3 +9,4 @@ export * from "./subscription.schema.js";
 export * from "./member.schema.js";
 export * from "./money.schema.js";
 export * from "./attendance.schema.js";
+export * from "./student.schema.js";

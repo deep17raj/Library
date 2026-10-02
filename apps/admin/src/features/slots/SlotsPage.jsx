@@ -6,7 +6,7 @@ import { useSlots } from "./api.js";
 import { DayTimeline } from "./components/DayTimeline.jsx";
 import { SlotCard } from "./components/SlotCard.jsx";
 import { SlotDialog } from "./components/SlotDialog.jsx";
-import { ICONS } from "../../app/icons.js";
+import { ICONS } from "@app/shared/icons";
 
 /** Time slots, their fees and plans. */
 export function SlotsPage() {

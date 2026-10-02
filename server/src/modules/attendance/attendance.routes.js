@@ -1,5 +1,5 @@
 import { Router } from "express";
-import { ERROR_CODES, PERMISSIONS } from "@app/shared/constants";
+import { PERMISSIONS } from "@app/shared/constants";
 import {
   attendanceMonthQuerySchema,
   attendanceQuerySchema,
@@ -8,12 +8,10 @@ import {
   markAbsentSchema,
 } from "@app/shared/validation";
 import { asyncHandler } from "../../http/asyncHandler.js";
-import { AppError } from "../../http/AppError.js";
 import { sendCsv } from "../../lib/csv.js";
 import { validateBody, validateQuery } from "../../http/validate.js";
 import { requirePermission } from "../../middleware/libraryContext.js";
-import { createFailureThrottle } from "../../middleware/failureThrottle.js";
-import { findLibraryBySlug } from "../platform/platform.repository.js";
+import { createFailureThrottle, throttled } from "../../middleware/failureThrottle.js";
 
 const FIFTEEN_MINUTES = 15 * 60 * 1000;
 
@@ -62,7 +60,9 @@ function registerMarkingRoutes(router, service, canMark) {
     "/attendance/roster",
     canMark,
     validateQuery(attendanceQuerySchema),
-    asyncHandler(async (req, res) => res.json(await service.listRoster(req.ctx, req.validatedQuery))),
+    asyncHandler(async (req, res) =>
+      res.json(await service.listRoster(req.ctx, req.validatedQuery)),
+    ),
   );
   router.post(
     "/attendance",
@@ -83,46 +83,26 @@ function registerMarkingRoutes(router, service, canMark) {
 }
 
 /**
- * Mounted at /api/s/:slug. Public kiosk check-in: phone + the day's code, rate-limited
- * per IP + phone. The library must be active. Student-authenticated routes come in M7.
+ * Mounted inside the student API router (/api/s/:slug), which has already resolved the
+ * library (req.ctx). Public kiosk check-in: phone + the day's code, rate-limited per
+ * IP + phone; no session.
  */
-export function createPublicCheckinRouter({ attendanceService: service, db }) {
+export function createPublicCheckinRouter({ attendanceService: service }) {
   const router = Router({ mergeParams: true });
   const throttle = createFailureThrottle({
     windowMs: FIFTEEN_MINUTES,
     maxFailures: 10,
-    keyOf: (req) => `${req.ip}|${String(req.body?.phone || "")}`,
+    keyOf: (req) => `${req.ip}|${req.ctx.tenantId}|${String(req.body?.phone || "")}`,
     message: "Too many check-in attempts. Please wait a few minutes and try again.",
   });
 
   router.post(
     "/kiosk/checkin",
-    resolveLibrary(db),
     throttle.guard,
     validateBody(kioskCheckinSchema),
-    asyncHandler(async (req, res, next) => {
-      try {
-        const result = await service.checkInByPhone(req.ctx, req.body);
-        throttle.clear(req);
-        res.json(result);
-      } catch (error) {
-        if (error instanceof AppError && error.status < 500) throttle.recordFailure(req);
-        next(error);
-      }
+    throttled(throttle, async (req, res) => {
+      res.json(await service.checkInByPhone(req.ctx, req.body));
     }),
   );
   return router;
-}
-
-/** Resolve :slug → an active library, then req.ctx = { tenantId }. */
-function resolveLibrary(db) {
-  return asyncHandler(async (req, res, next) => {
-    const library = await findLibraryBySlug(db, req.params.slug);
-    if (!library) throw new AppError(404, ERROR_CODES.NOT_FOUND, "Library not found");
-    if (library.status !== "active") {
-      throw new AppError(403, ERROR_CODES.LIBRARY_SUSPENDED, "This library is not active.");
-    }
-    req.ctx = { tenantId: library.id };
-    next();
-  });
 }

@@ -3,7 +3,7 @@ import { expenseFormSchema } from "@app/shared/validation";
 import { MoneyField, SelectField, TextField } from "@app/shared/ui";
 import { useDialogForm } from "../../../app/forms.js";
 import { FormDialog } from "../../../app/FormDialog.jsx";
-import { ICONS } from "../../../app/icons.js";
+import { ICONS } from "@app/shared/icons";
 import { PaymentModeField } from "../../billing/components/PaymentModeField.jsx";
 import { useAddExpense } from "../api.js";
 

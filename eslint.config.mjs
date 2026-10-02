@@ -25,6 +25,11 @@ export default [
     languageOptions: { sourceType: "commonjs" },
   },
   {
+    // The student app's service worker: a classic script in the worker scope.
+    files: ["apps/student/public/sw.js"],
+    languageOptions: { sourceType: "script", globals: { ...globals.serviceworker } },
+  },
+  {
     files: ["**/*.jsx"],
     plugins: { react, "react-hooks": reactHooks },
     settings: { react: { version: "18.3" } },

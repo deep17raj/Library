@@ -12,7 +12,7 @@ Requirements: cPanel with **Setup Node.js App** (Node 18 or newer) and MySQL/Mar
 npm install
 npm run verify        # lint + tests + build; must pass
 ```
-This creates `apps/admin/dist/`. Building on shared hosting is slow and often runs out
+This creates `apps/admin/dist/` and `apps/student/dist/`. Building on shared hosting is slow and often runs out
 of memory, so the built files are uploaded instead.
 
 ## 2. Database (cPanel → MySQL Databases)
@@ -26,7 +26,7 @@ first start by `server/src/migrations/`.
 Zip and upload **everything except** `node_modules/`, `.env`, `.git/` and
 `server/storage/` (uploaded logos/photos live there — never overwrite it on a redeploy;
 or set `STORAGE_DIR` to a folder outside the app). Make sure the
-zip **includes** `apps/admin/dist/`. Extract it into the app folder, e.g.
+zip **includes** `apps/admin/dist/` and `apps/student/dist/`. Extract it into the app folder, e.g.
 `/home/CPUSER/library.example.com`.
 
 ## 4. `.env` in the app folder
@@ -68,6 +68,13 @@ folder → startup file **`app.js`** → Create → **Run NPM Install** → **Re
 3. Sign in with the super-admin email/password → Libraries page.
 4. Create a library, sign out, sign in as its owner → Dashboard.
 5. As super admin, suspend that library → the owner is signed out on next click.
+6. Student app (milestone 7): reactivate it, then open `https://library.example.com/s/<slug>/`
+   on an Android phone in Chrome → the library's name and colour show; staff give a
+   member app access → sign in with that phone + code → "Install app" appears.
+
+The student app needs **HTTPS** (cPanel AutoSSL / Let's Encrypt) for installing, the
+camera scanner and notifications. The push key pair is created by the app on first
+use (stored in the database) — nothing to set up.
 
 If something fails, open the app's log (*Setup Node.js App* → the app → log, or
 `stderr.log` in the app folder). Things to watch for in this first test:

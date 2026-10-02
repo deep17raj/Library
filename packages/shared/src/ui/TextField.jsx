@@ -1,8 +1,9 @@
 import { forwardRef, useId } from "react";
 import { cx } from "./cx.js";
 
+// 16 px text on phones: iOS Safari zooms the page into any smaller input on focus.
 export const INPUT_CLASS =
-  "w-full rounded-xl border bg-white px-3 py-2 text-sm text-slate-900 outline-none transition-colors placeholder:text-slate-400 focus:border-brand focus:ring-2 focus:ring-brand/30 disabled:bg-slate-50";
+  "w-full rounded-xl border bg-white px-3 py-2 text-base sm:text-sm text-slate-900 outline-none transition-colors placeholder:text-slate-400 focus:border-brand focus:ring-2 focus:ring-brand/30 disabled:bg-slate-50";
 
 /** Label above, hint below; an error replaces the hint. Shared by every field. */
 export function FieldFrame({ id, label, hint, error, className, children }) {
@@ -27,11 +28,12 @@ export function FieldFrame({ id, label, hint, error, className, children }) {
 }
 
 /**
- * Labelled input with optional leading icon or text (e.g. "₹"). forwardRef so
- * react-hook-form's register() reaches the real <input>.
+ * Labelled input with optional leading icon or text (e.g. "₹") and an optional
+ * `trailing` element inside the right edge (e.g. a show-password button). forwardRef
+ * so react-hook-form's register() reaches the real <input>.
  */
 export const TextField = forwardRef(function TextField(
-  { label, error, hint, className, id, icon: Icon, prefix, ...inputProps },
+  { label, error, hint, className, id, icon: Icon, prefix, trailing, ...inputProps },
   ref,
 ) {
   const generatedId = useId();
@@ -53,9 +55,15 @@ export const TextField = forwardRef(function TextField(
           id={inputId}
           aria-invalid={Boolean(error)}
           aria-describedby={error || hint ? `${inputId}-message` : undefined}
-          className={cx(INPUT_CLASS, lead && "pl-9", error ? "border-red-400" : "border-slate-300")}
+          className={cx(
+            INPUT_CLASS,
+            lead && "pl-9",
+            trailing && "pr-11",
+            error ? "border-red-400" : "border-slate-300",
+          )}
           {...inputProps}
         />
+        {trailing && <div className="absolute inset-y-0 right-1 flex items-center">{trailing}</div>}
       </div>
     </FieldFrame>
   );

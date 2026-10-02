@@ -14,11 +14,15 @@ src/
   migrations/    NNN_name.sql, applied once each in order (schema_migrations)
   http/          AppError, errorHandler (API error format), asyncHandler, validateBody
   middleware/    staffAuth, libraryContext (req.ctx + requirePermission), upload (multer),
-                 failureThrottle (rate limits), requestGuards (CSRF, headers)
-  lib/           jwt, password, cookies, images (sharp re-encode), bindDeps, csv (export)
+                 failureThrottle (rate limits + throttled()), requestGuards (CSRF, headers),
+                 librarySlug (/api/s/:slug → library), studentAuth (student session,
+                 first-password gate)
+  lib/           jwt, password, cookies, images (sharp re-encode), bindDeps, csv (export),
+                 dailyCode (check-in code), vapid (push keys, push-service allowlist)
   jobs/          scheduler (job_runs, once per interval), jobs.js (the job list),
                  internal.routes.js (POST /api/internal/jobs/run, X-Cron-Secret)
-  static/        serves apps/admin/dist at /admin and storage/public at /files
+  static/        apps/admin/dist at /admin; the student build at /student + /s/<slug>/
+                 (per-library manifest, icons, head tags; /sw.js); storage/public at /files
   modules/       one folder per feature (see each README.md)
 testing/         fakes for unit tests, MySQL helpers + integration tests
 ```

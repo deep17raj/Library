@@ -113,3 +113,15 @@ export async function setPlatformSetting(db, key, value) {
     [key, JSON.stringify(value)],
   );
 }
+
+/**
+ * Store a setting only if it isn't there yet (first writer wins). Used for values
+ * generated once, like the push keys, so two first requests can't store two pairs.
+ */
+export async function insertPlatformSettingIfAbsent(db, key, value) {
+  await execute(
+    db,
+    "INSERT IGNORE INTO platform_settings (setting_key, setting_value) VALUES (?, ?)",
+    [key, JSON.stringify(value)],
+  );
+}

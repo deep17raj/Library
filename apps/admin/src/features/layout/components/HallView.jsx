@@ -6,7 +6,7 @@ import { useLayoutAction } from "../api.js";
 import { AddTablesDialog } from "./AddTablesDialog.jsx";
 import { HallDialog } from "./HallDialog.jsx";
 import { TableCard } from "./TableCard.jsx";
-import { ICONS } from "../../../app/icons.js";
+import { ICONS } from "@app/shared/icons";
 
 /** One hall: its summary, actions and tables. */
 export function HallView({ hall, layout, canEdit }) {

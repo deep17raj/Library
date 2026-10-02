@@ -16,7 +16,7 @@ import {
 } from "@app/shared/ui";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { downloadFile } from "../../app/download.js";
-import { ICONS } from "../../app/icons.js";
+import { ICONS } from "@app/shared/icons";
 import { useToday } from "../../app/useToday.js";
 import { useLibrarySettings } from "../settings/api.js";
 import { useSlots } from "../slots/api.js";
@@ -103,9 +103,19 @@ export function AttendancePage() {
       </div>
 
       <div className="mb-5 flex flex-wrap items-end gap-4">
-        <SegmentedControl label="When" value={activePeriod} onChange={setPeriod} options={PERIOD_OPTIONS} />
+        <SegmentedControl
+          label="When"
+          value={activePeriod}
+          onChange={setPeriod}
+          options={PERIOD_OPTIONS}
+        />
         {slots?.length > 0 && (
-          <SegmentedControl label="Batch" value={slotId} onChange={setSlotId} options={slotOptions} />
+          <SegmentedControl
+            label="Batch"
+            value={slotId}
+            onChange={setSlotId}
+            options={slotOptions}
+          />
         )}
       </div>
 

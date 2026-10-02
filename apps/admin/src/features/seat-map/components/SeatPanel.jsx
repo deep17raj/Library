@@ -9,7 +9,7 @@ import { useSeatHistory } from "../../seating/api.js";
 import { MoveDialog } from "../../seating/components/BookingDialogs.jsx";
 import { EndBookingDialog } from "../../seating/components/EndBookingDialog.jsx";
 import { SwapDialog } from "../../seating/components/SwapDialog.jsx";
-import { ICONS } from "../../../app/icons.js";
+import { ICONS } from "@app/shared/icons";
 
 /** The booking shape the seating dialogs need, built from a seat-map occupant. */
 function asBooking(occupant, seat, hall) {

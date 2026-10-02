@@ -7,7 +7,7 @@ import { StatusBadge } from "../../app/StatusBadge.jsx";
 import { useStaff } from "./api.js";
 import { StaffDialog } from "./components/StaffDialog.jsx";
 import { ResetPasswordDialog } from "./components/ResetPasswordDialog.jsx";
-import { ICONS } from "../../app/icons.js";
+import { ICONS } from "@app/shared/icons";
 
 const CLOSED = { mode: null, member: null };
 

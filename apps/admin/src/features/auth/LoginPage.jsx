@@ -4,7 +4,7 @@ import { Lock, Mail } from "lucide-react";
 import { staffLoginSchema } from "@app/shared/validation";
 import { Alert, Button, TextField } from "@app/shared/ui";
 import { applyServerErrors, useSchemaForm } from "../../app/forms.js";
-import { ICONS } from "../../app/icons.js";
+import { ICONS } from "@app/shared/icons";
 import { homePathFor } from "../../app/navigation.js";
 import { useSession } from "../../app/session.js";
 import { useLogin } from "./api.js";

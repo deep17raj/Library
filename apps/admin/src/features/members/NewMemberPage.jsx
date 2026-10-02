@@ -13,7 +13,7 @@ import {
   useToast,
 } from "@app/shared/ui";
 import { applyServerErrors, useSchemaForm } from "../../app/forms.js";
-import { ICONS } from "../../app/icons.js";
+import { ICONS } from "@app/shared/icons";
 import { useToday } from "../../app/useToday.js";
 import { BookingFields } from "../seating/components/BookingFields.jsx";
 import { useCreateMember, useUploadIdProof, useUploadPhoto } from "./api.js";

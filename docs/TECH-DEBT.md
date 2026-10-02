@@ -5,10 +5,20 @@ Format: **date — area — what — why it was accepted — how to pay it off.*
 
 ## Known by design (from ARCHITECTURE.md)
 
-- **2026-10-01 — student-app check-in** — the desk QR encodes `/s/:slug/checkin?code=…`
-  and the `qr` method exists, but the student PWA that scans it (and the student
-  attendance view) is milestone 7. Until then check-in works via the phone **kiosk**
-  (`/api/s/:slug/kiosk/checkin`) and staff marking.
+- **2026-10-02 — QR scanning on iPhone** — the in-app scanner uses the browser's
+  `BarcodeDetector` (Chrome/Android). iPhones don't have it: they open the desk QR with
+  the Camera app (the link checks them in) or type the code. Add a JS decoder (e.g.
+  jsQR, ~40 kB, lazy-loaded) only if libraries ask for in-app scanning on iPhone.
+- **2026-10-02 — notifications are subscribe-only** — students can turn notifications on
+  and their devices are stored; nothing is sent until milestone 8 (fee reminders,
+  notices, `web-push` with the stored VAPID keys). The inbox screen also comes in M8.
+- **2026-10-02 — streak look-back** — the attendance streak counts back over this month
+  and last month only (~60 days). Fine for a badge; widen the query if anyone needs more.
+- **2026-10-02 — offline** — the service worker keeps the app shell and build assets, so
+  the app opens offline, but screens need the network (no business data is cached, by
+  rule). Revisit only if libraries have poor Wi-Fi.
+- **2026-10-02 — Tests tab** — the student app has four tabs; "Tests" joins with the
+  mock-test store (milestones 9–10).
 - **2026-10-01 — check-in after check-out** — a third scan the same day reports "already
   checked out" rather than re-opening the session (one in/out pair per booking per day).
   Revisit if libraries want multiple sessions a day.

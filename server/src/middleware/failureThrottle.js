@@ -46,3 +46,22 @@ export function createFailureThrottle({ windowMs, maxFailures, keyOf, message, n
 
   return { guard, recordFailure, clear };
 }
+
+/**
+ * Wrap a route handler so a client error (4xx: wrong password, wrong code…) counts as
+ * a failure for the throttle and a success clears it. Server errors don't count —
+ * a database hiccup must not lock a student out.
+ * @param {ReturnType<typeof createFailureThrottle>} throttle
+ * @param {(req: any, res: any) => Promise<unknown>} handler
+ */
+export function throttled(throttle, handler) {
+  return async (req, res, next) => {
+    try {
+      await handler(req, res);
+      throttle.clear(req);
+    } catch (error) {
+      if (error?.status >= 400 && error?.status < 500) throttle.recordFailure(req);
+      next(error);
+    }
+  };
+}

@@ -1,5 +1,5 @@
 import { hasPermission, PERMISSIONS, ROLES } from "@app/shared/constants";
-import { ICONS } from "./icons.js";
+import { ICONS } from "@app/shared/icons";
 
 const isSuperAdmin = (user) => user.role === ROLES.SUPER_ADMIN;
 const inLibrary = (user) => !isSuperAdmin(user);

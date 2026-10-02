@@ -15,7 +15,7 @@ export const REPO_ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url
  * @property {{ uri?: string, host: string, port: number, user: string, password: string,
  *   database: string, connectionLimit: number }} db
  * @property {{ jwtSecret: string, staffCookie: string, cookieSecure: boolean,
- *   staffTokenTtlSeconds: number }} auth
+ *   staffTokenTtlSeconds: number, studentCookie: string, studentTokenTtlSeconds: number }} auth
  * @property {{ email: string, password: string, name: string }} superAdmin
  * @property {string} cronSecret  enables POST /api/internal/jobs/run (cPanel cron)
  */
@@ -42,6 +42,10 @@ export function getConfig() {
       staffCookie: "sl_staff",
       cookieSecure: env.COOKIE_SECURE ? env.COOKIE_SECURE === "true" : isProduction,
       staffTokenTtlSeconds: Number(env.STAFF_TOKEN_TTL || 60 * 60 * 12),
+      // Students use an installed app on their own phone: stay signed in for 60 days
+      // (a password reset by staff still ends the session at once via token_version).
+      studentCookie: "sl_student",
+      studentTokenTtlSeconds: Number(env.STUDENT_TOKEN_TTL || 60 * 60 * 24 * 60),
     },
     superAdmin: {
       email: (env.SUPER_ADMIN_EMAIL || "").trim().toLowerCase(),

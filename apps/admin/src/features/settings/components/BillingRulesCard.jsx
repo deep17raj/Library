@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { billingSettingsSchema } from "@app/shared/validation";
 import { Alert, Button, SectionCard, SegmentedControl, TextField, useToast } from "@app/shared/ui";
 import { applyServerErrors, useSchemaForm } from "../../../app/forms.js";
-import { ICONS } from "../../../app/icons.js";
+import { ICONS } from "@app/shared/icons";
 import { useSaveBillingRules } from "../api.js";
 
 // Each choice explains what it means with an example (UI-GUIDE §10 Settings).

@@ -16,7 +16,7 @@ import {
   useToast,
 } from "@app/shared/ui";
 import { downloadFile } from "../../app/download.js";
-import { ICONS } from "../../app/icons.js";
+import { ICONS } from "@app/shared/icons";
 import { useCan } from "../../app/permissions.js";
 import { useDues } from "./api.js";
 

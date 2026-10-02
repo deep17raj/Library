@@ -10,7 +10,7 @@ import {
   useToast,
 } from "@app/shared/ui";
 import { applyServerErrors, useSchemaForm } from "../../../app/forms.js";
-import { ICONS } from "../../../app/icons.js";
+import { ICONS } from "@app/shared/icons";
 import { useSaveCheckinRules } from "../api.js";
 
 const SLOT_MODES = [

@@ -13,7 +13,7 @@ import {
   Skeleton,
   StatCard,
 } from "@app/shared/ui";
-import { ICONS, PAYMENT_MODE_ICONS } from "../../app/icons.js";
+import { ICONS, PAYMENT_MODE_ICONS } from "@app/shared/icons";
 import { useToday } from "../../app/useToday.js";
 import { useDayLedger } from "./api.js";
 

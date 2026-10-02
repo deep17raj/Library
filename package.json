@@ -10,11 +10,12 @@
   "workspaces": [
     "packages/shared",
     "server",
-    "apps/admin"
+    "apps/admin",
+    "apps/student"
   ],
   "scripts": {
     "start": "node app.js",
-    "dev": "concurrently -n server,admin -c blue,green \"npm:dev -w server\" \"npm:dev -w apps/admin\"",
+    "dev": "concurrently -n server,admin,student -c blue,green,magenta \"npm:dev -w server\" \"npm:dev -w apps/admin\" \"npm:dev -w apps/student\"",
     "test": "npm test --workspaces --if-present",
     "lint": "eslint . && prettier --check .",
     "format": "prettier --write .",

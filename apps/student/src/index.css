@@ -1,0 +1,36 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  /* Default brand colour (indigo); the library's colour replaces these at runtime. */
+  --brand: 79 70 229;
+  --brand-dark: 67 56 202;
+  --brand-light: 224 231 255;
+}
+
+body {
+  @apply bg-slate-50 font-sans text-slate-900 antialiased;
+  /* An app, not a web page: no grey flash on tap, no pull-to-refresh bounce. */
+  -webkit-tap-highlight-color: transparent;
+  overscroll-behavior-y: none;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+
+/* Receipts print without the app's header and tabs. */
+@media print {
+  .no-print {
+    display: none !important;
+  }
+  body {
+    background: white;
+  }
+}

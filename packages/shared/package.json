@@ -15,13 +15,17 @@
     "./theme": "./src/theme/index.js",
     "./slots": "./src/slots/index.js",
     "./billing": "./src/billing/index.js",
-    "./attendance": "./src/attendance/index.js"
+    "./attendance": "./src/attendance/index.js",
+    "./icons": "./src/icons/index.js",
+    "./forms": "./src/forms/index.js"
   },
   "scripts": {
     "test": "node --test"
   },
   "dependencies": {
+    "@hookform/resolvers": "^3.9.1",
     "lucide-react": "^0.460.0",
+    "react-hook-form": "^7.53.2",
     "zod": "^3.23.8"
   },
   "peerDependencies": {

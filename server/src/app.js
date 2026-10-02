@@ -40,7 +40,7 @@ export function createApp({ db, config }) {
     apiNotFound,
   );
   serveFiles(app, config.storageDir);
-  serveApps(app);
+  serveApps(app, { db, storageDir: config.storageDir });
   app.use(errorHandler);
   return { app, services, scheduler };
 }

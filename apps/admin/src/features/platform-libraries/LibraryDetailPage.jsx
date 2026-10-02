@@ -3,7 +3,7 @@ import { Alert, PageHeader, Spinner } from "@app/shared/ui";
 import { useLibrary } from "./api.js";
 import { LibrarySummaryCard } from "./components/LibrarySummaryCard.jsx";
 import { AccountsCard } from "./components/AccountsCard.jsx";
-import { ICONS } from "../../app/icons.js";
+import { ICONS } from "@app/shared/icons";
 
 export function LibraryDetailPage() {
   const { id } = useParams();

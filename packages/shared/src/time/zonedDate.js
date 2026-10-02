@@ -110,6 +110,23 @@ export function displayDateTime(instant, timeZone) {
   return dateTimeFormatters.get(key).format(new Date(instant));
 }
 
+const timeFormatters = new Map();
+
+/**
+ * Just the clock time of an instant, "9:05 am", in a timezone (the library's). "" for
+ * empty values — for check-in/out times within a day.
+ * @param {Date | string | null | undefined} instant
+ * @param {string} [timeZone]
+ */
+export function displayTime(instant, timeZone) {
+  if (!instant) return "";
+  const key = timeZone || "viewer";
+  if (!timeFormatters.has(key)) {
+    timeFormatters.set(key, new Intl.DateTimeFormat("en-IN", { timeStyle: "short", timeZone }));
+  }
+  return timeFormatters.get(key).format(new Date(instant));
+}
+
 /** First and last day of the month a date falls in: "2026-10-15" → ["2026-10-01", "2026-10-31"]. */
 export function monthRange(dateKey) {
   const [year, month] = dateKey.split("-").map(Number);

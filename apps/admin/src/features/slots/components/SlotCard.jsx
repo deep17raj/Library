@@ -5,7 +5,7 @@ import { Badge, Button, Card } from "@app/shared/ui";
 import { planLength, slotColor } from "../slotDisplay.js";
 import { PlanDialog } from "./PlanDialog.jsx";
 import { SlotDialog } from "./SlotDialog.jsx";
-import { ICONS } from "../../../app/icons.js";
+import { ICONS } from "@app/shared/icons";
 
 /** A slot: times, fee, and its plans with add/edit. */
 export function SlotCard({ slot, index, canEdit }) {

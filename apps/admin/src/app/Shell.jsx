@@ -5,7 +5,7 @@ import { ROLE_LABELS } from "@app/shared/constants";
 import { IconButton, Spinner, cx } from "@app/shared/ui";
 import { useLogout } from "../features/auth/api.js";
 import { useLibrarySettings } from "../features/settings/api.js";
-import { ICONS } from "./icons.js";
+import { ICONS } from "@app/shared/icons";
 import { visibleNav } from "./navigation.js";
 import { useSession } from "./session.js";
 import { useBranding } from "./useBranding.js";

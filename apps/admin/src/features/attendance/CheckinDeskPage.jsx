@@ -1,9 +1,9 @@
 import { useState } from "react";
 import { displayDate } from "@app/shared/time";
 import { Alert, Button, Card, PageHeader, Spinner, TextField } from "@app/shared/ui";
-import { ICONS } from "../../app/icons.js";
+import { ICONS } from "@app/shared/icons";
 import { useCheckinDesk, useKioskCheckin } from "./api.js";
-import { QrImage } from "./components/QrImage.jsx";
+import { QrImage } from "../../app/QrImage.jsx";
 
 /**
  * The shared desk screen (UI-GUIDE §10 Check-in desk): today's code + QR to scan, and a

@@ -6,9 +6,12 @@ import { createLayoutService } from "./modules/layout/layout.service.js";
 import { createLedgerService } from "./modules/ledger/ledger.service.js";
 import { createMembersService } from "./modules/members/members.service.js";
 import { createPlatformService } from "./modules/platform/platform.service.js";
+import { createPortalService } from "./modules/portal/portal.service.js";
+import { createPushService } from "./modules/push/push.service.js";
 import { createSettingsService } from "./modules/settings/settings.service.js";
 import { createSlotsService } from "./modules/slots/slots.service.js";
 import { createStaffService } from "./modules/staff/staff.service.js";
+import { createStudentsService } from "./modules/students/students.service.js";
 import { createSubscriptionsService } from "./modules/subscriptions/subscriptions.service.js";
 import { createWaitlistService } from "./modules/waitlist/waitlist.service.js";
 
@@ -22,6 +25,12 @@ export function buildServices({ db, config }) {
   const subscriptionsService = createSubscriptionsService({ db });
   const billingService = createBillingService({ db });
   const expensesService = createExpensesService({ db });
+  // Check-in applies the slot and dues gates; the dues gate reads billing.
+  const attendanceService = createAttendanceService({
+    db,
+    billing: billingService,
+    secret: config.auth.jwtSecret,
+  });
   return {
     authService: createAuthService({ db, config }),
     platformService: createPlatformService({ db }),
@@ -42,11 +51,15 @@ export function buildServices({ db, config }) {
     billingService,
     expensesService,
     ledgerService: createLedgerService({ db, billing: billingService, expenses: expensesService }),
-    // Check-in applies the slot and dues gates; the dues gate reads billing.
-    attendanceService: createAttendanceService({
+    attendanceService,
+    // Student app: accounts, their own data (read from the modules that own it), push.
+    studentsService: createStudentsService({ db, config }),
+    portalService: createPortalService({
       db,
+      seating: subscriptionsService,
       billing: billingService,
-      secret: config.auth.jwtSecret,
+      attendance: attendanceService,
     }),
+    pushService: createPushService({ db }),
   };
 }

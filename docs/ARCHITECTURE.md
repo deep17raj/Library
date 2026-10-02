@@ -69,11 +69,13 @@ with `require`).
 │     ├─ db/            pool.js, transaction.js (withTransaction), migrate.js
 │     ├─ migrations/    001_tenancy.sql, 002_layout.sql, … (run once each, in order)
 │     ├─ http/          AppError.js, errorHandler.js, asyncHandler.js, validateBody.js
-│     ├─ middleware/    staffAuth.js, studentAuth.js, tenantContext.js,
-│     │                 requirePermission.js, rateLimit.js, upload.js
-│     ├─ lib/           jwt.js, password.js, dailyCode.js, images.js, csv.js, clock.js
+│     ├─ middleware/    staffAuth.js, studentAuth.js (+ first-password gate),
+│     │                 libraryContext.js, librarySlug.js (/s/:slug → library),
+│     │                 failureThrottle.js (rate limits), requestGuards.js, upload.js
+│     ├─ lib/           jwt.js, password.js, dailyCode.js, vapid.js, images.js, csv.js
 │     ├─ jobs/          scheduler.js, jobs.js (job list), internal.routes.js (cron, §8.5)
-│     ├─ static/        serveApps.js (admin + student builds, per-library manifest)
+│     ├─ static/        serveApps.js (admin), serveStudentApp.js + studentShell.js +
+│     │                 appIcons.js (student build, per-library manifest/icons/head)
 │     └─ modules/       one folder per feature (list below)
 │        └─ seats/      seats.routes.js  seats.controller.js  seats.service.js
 │                       seats.repository.js  seats.validation.js  seats.test.js  README.md
@@ -83,8 +85,8 @@ with `require`).
 │     ├─ app/           providers (QueryClient, Session), Shell (sidebar/topbar), guards
 │     └─ features/      seat-map/ layout/ slots/ members/ … (one folder per feature)
 │        └─ seat-map/   SeatMapPage.jsx  components/  hooks/  api.js
-└─ apps/student/        React + Vite + Tailwind PWA, served at /s/:slug
-   └─ src/  main.jsx App.jsx router.jsx app/ features/ public/sw.js
+└─ apps/student/        React + Vite + Tailwind PWA: files at /student/*, app at /s/:slug/
+   └─ src/  main.jsx router.jsx app/ features/   ·  public/sw.js (served at /sw.js)
 ```
 
 **Server modules** (`server/src/modules/`): `auth`, `platform` (super admin: libraries,
@@ -147,11 +149,18 @@ another library's seat/member/slot even if a service has a bug.
 | `super_admin` | email + password (`users`, seeded from `.env` on first boot) | `sl_staff` | Platform area; may act inside a library by sending `X-Library-Id` (audited) |
 | `admin` (owner) | email + password | `sl_staff` | Everything in own library |
 | `staff` | email + password | `sl_staff` | Own library, limited by `permissions` |
-| student (member) | library slug + phone + password | `sl_student` (key derived from `JWT_SECRET`) | Own data in own library |
+| student (member) | library slug + phone + password | `sl_student`, path `/api/s/<slug>`, 60 days (signing key derived from `JWT_SECRET`) | Own data in own library |
 
 - JWT payload: `{ sub, role, tenantId, tv }` (`tv` = `token_version`). Each request
   re-reads the user's `status` + `token_version` and the library's `status` (cached
   60 s in memory) — disabling a user or suspending a library ends sessions at once.
+- **Students** [D10]: staff give access (6-digit one-time code); sign-in is
+  `POST /api/s/<slug>/auth/login`. Student tokens `{ sub, tid, tv }` are signed with a
+  key derived from `JWT_SECRET` for students only (a staff token never passes as a
+  student session); `tid` must be the library in the URL. The cookie's path is
+  `/api/s/<slug>`, so one phone can use two libraries' apps. Each request re-reads the
+  member (`status`, `token_version`, password set); a reset by staff ends the session.
+  `must_change_password` limits the session to `/me` + changing the password.
 - `tenantContext` middleware builds `req.ctx = { tenantId, actor, permissions }`.
   Services take `ctx.tenantId`; nothing reads the tenant from the body.
 - **Staff permissions** (fixed keys in `shared/constants/permissions.js`):
@@ -412,6 +421,7 @@ CREATE TABLE members (
   password_hash VARCHAR(255) NULL,
   must_change_password TINYINT(1) NOT NULL DEFAULT 1,
   token_version INT UNSIGNED NOT NULL DEFAULT 0,
+  app_last_login_at DATETIME NULL,               -- student app; shown to staff (M7)
   notes VARCHAR(500) NOT NULL DEFAULT '',
   created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
   updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
@@ -1171,7 +1181,9 @@ confirm-then-webhook and webhook-then-confirm both grant exactly once, refund re
 All JSON under `/api`. Errors: `{ "error": { "code": "SEAT_SLOT_TAKEN", "message": "…", "fields": { "seatId": "…" } } }`.
 Lists support `?page=&pageSize=&q=`. Legend: **P** = public, **SA** = super_admin,
 **A** = admin, **S:perm** = staff with that permission (admin always passes),
-**ST** = signed-in student, ⏱ = rate-limited.
+**ST** = signed-in student, ⏱ = rate-limited. ¹ Until a student replaces the temporary
+password, only `/me`, `/auth/password` and `/auth/logout` answer; the rest return 403
+`PASSWORD_CHANGE_REQUIRED` [D10].
 
 **Auth & public**
 | Method | Path | Who |
@@ -1223,7 +1235,8 @@ Lists support `?page=&pageSize=&q=`. Legend: **P** = public, **SA** = super_admi
 | POST | /admin/members (member + bookings + waitlist conversion, one tx; admission/deposit invoices + first fee invoices in the same tx) | S:members.manage |
 | GET | /admin/members/:id (member, subscriptions, seat history) | any staff |
 | PATCH | /admin/members/:id · POST, DELETE /admin/members/:id/photo · POST /admin/members/:id/id-proof (multipart) | S:members.manage |
-| POST | /admin/members/:id/reset-password (student app login, M7) | S:members.manage |
+| GET | /admin/members/:memberId/app-access (`{ granted, mustChangePassword, lastLoginAt }`) | any staff |
+| POST | /admin/members/:memberId/app-access — give or reset: `{ temporaryPassword }` once [D10] | S:members.manage |
 | GET | /admin/members/:id/id-proof (private file) | S:members.manage |
 | GET | /admin/members/:id/attendance?month= · invoices and payments come from /admin/members/:memberId/account | any staff |
 | GET | /admin/subscriptions/:id | any staff |
@@ -1256,12 +1269,13 @@ Lists support `?page=&pageSize=&q=`. Legend: **P** = public, **SA** = super_admi
 **Student** (`/s/:slug/*`)
 | Method | Path | Who |
 |---|---|---|
+| GET | /s/:slug/branding (name, logo, colour, timezone, contact) | P |
 | POST | /s/:slug/auth/login ⏱ · /logout · /password | P / ST |
-| GET | /s/:slug/me (profile, subscriptions + seats + slots, dues card) | ST |
+| GET | /s/:slug/me (profile, active bookings + seats, dues summary, today's check-ins) | ST¹ |
 | POST | /s/:slug/kiosk/checkin ⏱ `{phone, code}` — **built (M6)**, public, no session | P |
-| POST | /s/:slug/checkin ⏱ `{code}` (student-app QR, M7) | ST |
-| GET | /s/:slug/attendance?month= | ST |
-| GET | /s/:slug/invoices · /s/:slug/payments · /s/:slug/payments/:id/receipt | ST |
+| POST | /s/:slug/checkin ⏱ `{code}` (desk QR or typed code) | ST |
+| GET | /s/:slug/attendance?month= (visits, days present, streak) | ST |
+| GET | /s/:slug/account (dues, invoices, payments) · /s/:slug/payments/:id/receipt | ST |
 | GET | /s/:slug/notifications · POST /s/:slug/notifications/:id/read | ST |
 | POST | /s/:slug/push/subscribe · /push/unsubscribe · GET /push/devices | ST |
 | GET | /s/:slug/store (catalog with price for this student) · /store/series/:id · /store/tests/:id | ST |
@@ -1272,8 +1286,11 @@ Lists support `?page=&pageSize=&q=`. Legend: **P** = public, **SA** = super_admi
 | GET | /s/:slug/attempts/:id/result · /attempts/:id/solutions | ST |
 | GET | /s/:slug/tests/:id/leaderboard?scope=all\|library | ST |
 
-**Static (not /api):** `/admin/*`, `/s/:slug/*` (shell with injected manifest),
-`/s/:slug/manifest.webmanifest`, `/sw.js`, `/files/*` (public uploads from `storage/public`, served with a 1-year cache; `storage/private` is never served statically),
+**Static (not /api):** `/admin/*`, `/student/*` (student build assets), `/s/:slug` →
+`/s/:slug/`, `/s/:slug/*` (one shell for every library; its manifest link, theme colour,
+title and touch icon are injected), `/s/:slug/manifest.webmanifest`,
+`/s/:slug/icon-{192,512,maskable-512}.png` (drawn from the library logo or colour),
+`/sw.js` (registered with scope `/s/<slug>/`), `/files/*` (public uploads from `storage/public`, served with a 1-year cache; `storage/private` is never served statically),
 `/.well-known/assetlinks.json`.
 
 ## 12. Screens
@@ -1321,7 +1338,9 @@ before building or changing any screen.
     library", platform settings, **content**: series → tests → sections → questions
     editor, CSV/XLSX import with preview, publish; **sales & revenue share** report
 
-**Student app** (`/s/:slug`, installable PWA, branded per library)
+**Student app** (`/s/:slug`, installable PWA, branded per library). Built in M7: 1–5, 7
+(push on/off lives in Me; the notifications inbox comes with M8). Bottom tabs: Home,
+Check-in, Fees, Me (+ Tests in M9–10). Attendance opens from Home and Me.
 1. Login (phone + password) · first-login password change
 2. **Home** — my seat(s) & slot(s), next-due card, today's check-in status, latest notice
 3. **Check-in** — scan desk QR (camera), result screen (warns outside slot / dues)
@@ -1349,6 +1368,7 @@ before building or changing any screen.
 | D7 | Student login | Phone + password issued by the library (no OTP for now). |
 | D8 | Fixed seat vs "sit anywhere" | **Both**, chosen per hall (`seating_mode` fixed / floating), so a library can use either or mix. |
 | D9 | GST | Not needed now. |
+| D10 | How does a student get their first app password? | **Staff give access** on the member page: a random 6-digit one-time code, shown once, read out to the student, who must choose their own password at first sign-in. A forgotten password is reset the same way (signs them out everywhere). (2026-10-02) |
 
 ## 14. Build order (milestones)
 
@@ -1363,7 +1383,7 @@ summary + manual test list.
 | 4 | **Members & seat map:** add/edit member (multi slot + seat picker), uploads, member detail, seat map, seat panel actions, waitlist. | Two students share A-12 Morning/Evening; seat map shows it; swap works. |
 | 5 | **Money:** invoice generation, payments with allocation, partial/credit, receipts, void, deposits & refunds, dues screen, expenses, day ledger, CSV, jobs scheduler. | Billing tests pass; partial payment leaves correct dues; ledger matches. |
 | 6 ✅ | **Check-in & attendance:** daily code, desk QR/kiosk, slot-time check (off/warn/block), dues gate, check-out, attendance screens. | Check-in outside slot warns/blocks per setting. |
-| 7 | **Student app:** login + password change, home, my seat, check-in scan, attendance, fees & receipts, PWA install with per-library manifest, push subscribe. | Student installs app on Android, checks in by QR. |
+| 7 ✅ | **Student app:** login + password change, home, my seat, check-in scan, attendance, fees & receipts, PWA install with per-library manifest, push subscribe. | Student installs app on Android, checks in by QR. |
 | 8 | **Notifications & insights:** announcements, inbox, fee-due / seat-expiry / waitlist automations, auto-release job, dashboard + insights. | Reminder arrives once (deduped); occupancy % correct. |
 | 9 | **Mock-test content:** platform editor, sections/questions, CSV/XLSX import with preview, publish rules, student preview. | Import 100-question CSV; errors shown per row. |
 | 10 | **Mock-test store & attempts:** catalog, pricing, PaymentProvider + Razorpay + webhook + reconcile, entitlements, attempt engine, scoring, results, solutions, leaderboard, sales reports. | Test-mode purchase via webhook only; refresh mid-test resumes; timeout auto-submits. |

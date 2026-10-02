@@ -1,32 +1,42 @@
-// The icon dictionary (docs/UI-GUIDE.md §4): one concept = one icon, everywhere.
-// Screens import icons from here, never straight from lucide-react, so changing a
-// concept's icon is a one-line edit.
+// The icon dictionary (docs/UI-GUIDE.md §4): one concept = one icon, everywhere —
+// in the admin app and the student app alike. Screens import icons from here
+// ("@app/shared/icons"), never straight from lucide-react, so changing a concept's
+// icon is a one-line edit.
 import {
   AlarmClock,
-  ArrowLeftRight,
   Armchair,
+  ArrowLeftRight,
+  BadgePercent,
   Ban,
   Banknote,
-  BadgePercent,
+  Bell,
+  BellOff,
   BookOpenCheck,
   Building2,
   CalendarCheck,
   CalendarDays,
+  ChevronLeft,
+  ChevronRight,
   CircleDollarSign,
+  CircleUserRound,
   Clock,
   CreditCard,
   Download,
   FileCheck,
   FileText,
+  Flame,
   Hourglass,
+  House,
+  IdCard,
   IndianRupee,
   KeyRound,
   Landmark,
   LayoutDashboard,
-  LogIn,
   LayoutGrid,
   LibraryBig,
+  LogIn,
   LogOut,
+  MapPin,
   MoveRight,
   Pencil,
   Phone,
@@ -34,6 +44,7 @@ import {
   Printer,
   QrCode,
   ReceiptText,
+  ScanLine,
   Search,
   Settings,
   ShieldCheck,
@@ -48,6 +59,7 @@ import {
   Users,
   UserX,
   Wallet,
+  X,
 } from "lucide-react";
 
 export const ICONS = Object.freeze({
@@ -92,6 +104,19 @@ export const ICONS = Object.freeze({
   search: Search,
   markPresent: UserCheck,
   markAbsent: UserX,
+  close: X,
+  previous: ChevronLeft,
+  next: ChevronRight,
+  // Student app (milestone 7)
+  home: House,
+  profile: CircleUserRound,
+  scan: ScanLine,
+  streak: Flame,
+  idCard: IdCard,
+  notifications: Bell,
+  notificationsOff: BellOff,
+  installApp: Smartphone,
+  location: MapPin,
 });
 
 /** Payment-mode icons (cash, UPI, card, bank, cheque, other, online). */

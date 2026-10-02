@@ -166,7 +166,10 @@ test("no active booking is refused", async () => {
 test("the roster starts everyone unmarked, then reflects a check-in", async () => {
   const { service } = setup();
   const before = await service.listRoster(CTX, { date: "2026-10-01" });
-  assert.deepEqual(before.members.map((m) => m.status), ["unmarked"]);
+  assert.deepEqual(
+    before.members.map((m) => m.status),
+    ["unmarked"],
+  );
 
   const code = dailyCode(SECRET, TENANT, "2026-10-01");
   await service.checkInByPhone(CTX, { phone: member.phone, code });

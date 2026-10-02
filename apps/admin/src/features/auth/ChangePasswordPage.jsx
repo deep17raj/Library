@@ -3,7 +3,7 @@ import { changePasswordSchema } from "@app/shared/validation";
 import { Alert, Button, Card, PageHeader, TextField } from "@app/shared/ui";
 import { applyServerErrors, useSchemaForm } from "../../app/forms.js";
 import { useChangePassword } from "./api.js";
-import { ICONS } from "../../app/icons.js";
+import { ICONS } from "@app/shared/icons";
 
 export function ChangePasswordPage() {
   const changePassword = useChangePassword();

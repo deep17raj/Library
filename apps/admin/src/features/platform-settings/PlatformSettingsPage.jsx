@@ -3,7 +3,7 @@ import { bpsToPercentInput, platformSettingsFormSchema } from "@app/shared/valid
 import { Alert, Button, Card, PageHeader, Spinner, TextField } from "@app/shared/ui";
 import { applyServerErrors, useSchemaForm } from "../../app/forms.js";
 import { usePlatformSettings, useSavePlatformSettings } from "./api.js";
-import { ICONS } from "../../app/icons.js";
+import { ICONS } from "@app/shared/icons";
 
 export function PlatformSettingsPage() {
   const { data: settings, isLoading } = usePlatformSettings();

@@ -2,7 +2,7 @@ import { useState } from "react";
 import { formatRupees } from "@app/shared/money";
 import { Badge, Button, Card } from "@app/shared/ui";
 import { CategoryDialog } from "./CategoryDialog.jsx";
-import { ICONS } from "../../../app/icons.js";
+import { ICONS } from "@app/shared/icons";
 
 /** Price tiers for seats (e.g. "AC +₹300/month"), added to the slot fee. */
 export function CategoriesCard({ categories, canEdit }) {

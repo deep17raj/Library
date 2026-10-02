@@ -1,4 +1,5 @@
 import { clearSessionCookie, setSessionCookie } from "../../lib/cookies.js";
+import { throttled } from "../../middleware/failureThrottle.js";
 
 /**
  * @param {{ authService: ReturnType<typeof import("./auth.service.js").createAuthService>,
@@ -12,18 +13,11 @@ export function createAuthController({ authService, config, loginThrottle }) {
     maxAgeSeconds: config.auth.staffTokenTtlSeconds,
   };
 
-  async function postLogin(req, res) {
-    let result;
-    try {
-      result = await authService.login(req.body);
-    } catch (error) {
-      loginThrottle.recordFailure(req);
-      throw error;
-    }
-    loginThrottle.clear(req);
+  const postLogin = throttled(loginThrottle, async (req, res) => {
+    const result = await authService.login(req.body);
     setSessionCookie(res, { ...cookie, value: result.token });
     res.json({ user: result.user });
-  }
+  });
 
   function postLogout(req, res) {
     clearSessionCookie(res, cookie);

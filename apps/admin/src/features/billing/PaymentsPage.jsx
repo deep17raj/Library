@@ -17,7 +17,7 @@ import {
   useToast,
 } from "@app/shared/ui";
 import { downloadFile } from "../../app/download.js";
-import { ICONS, PAYMENT_MODE_ICONS } from "../../app/icons.js";
+import { ICONS, PAYMENT_MODE_ICONS } from "@app/shared/icons";
 import { useToday } from "../../app/useToday.js";
 import { usePayments } from "./api.js";
 

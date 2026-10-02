@@ -19,12 +19,7 @@ export function createAuthRouter({ authService, config, requireStaff }) {
   const controller = createAuthController({ authService, config, loginThrottle });
   const router = Router();
 
-  router.post(
-    "/login",
-    loginThrottle.guard,
-    validateBody(staffLoginSchema),
-    asyncHandler(controller.postLogin),
-  );
+  router.post("/login", loginThrottle.guard, validateBody(staffLoginSchema), controller.postLogin);
   router.post("/logout", controller.postLogout);
   router.get("/me", requireStaff, controller.getMe);
   router.post(

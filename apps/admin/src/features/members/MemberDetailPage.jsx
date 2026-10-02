@@ -3,11 +3,12 @@ import { Link, useLocation, useParams } from "react-router-dom";
 import { PERMISSIONS } from "@app/shared/constants";
 import { displayDate } from "@app/shared/time";
 import { Alert, Badge, Button, Card, PageHeader, SectionCard, Skeleton } from "@app/shared/ui";
-import { ICONS } from "../../app/icons.js";
+import { ICONS } from "@app/shared/icons";
 import { useCan } from "../../app/permissions.js";
 import { useToday } from "../../app/useToday.js";
 import { MemberAttendanceCard } from "../attendance/components/MemberAttendanceCard.jsx";
 import { AccountCard } from "../billing/components/AccountCard.jsx";
+import { AppAccessCard } from "../student-app/components/AppAccessCard.jsx";
 import { AddBookingDialog } from "../seating/components/BookingDialogs.jsx";
 import { BookingList } from "../seating/components/BookingList.jsx";
 import { useMember } from "./api.js";
@@ -59,6 +60,7 @@ export function MemberDetailPage() {
             {member.address && <p className="text-slate-500">{member.address}</p>}
             {member.notes && <p className="italic text-slate-500">{member.notes}</p>}
           </Card>
+          <AppAccessCard member={member} />
           {canManage && <MemberFilesCard member={member} />}
         </div>
         <div className="flex flex-col gap-6">

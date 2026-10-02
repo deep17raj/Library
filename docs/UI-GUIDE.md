@@ -66,8 +66,11 @@ Motion: 150 ms colour/opacity transitions only; no bouncing. Respect
   (secondary details move under the name).
 - **Dialogs** for short focused tasks (≤ 6 fields). Longer tasks get a page
   (Add member).
-- Student app (milestone 7): bottom tab bar (Home, Check-in, Fees, Tests, Me), large
-  touch targets (≥ 44 px), one column, brand header with the library logo.
+- **Student app shell:** sticky header with the library's logo (or library icon) and
+  name; one column (max 512 px); bottom tab bar — Home, Check-in, Fees, Me (Tests joins
+  in M9–10) — with the active tab's icon on a brand pill. Touch targets ≥ 44 px, inputs
+  16 px (no iPhone zoom), safe-area padding top and bottom. Everything is in the
+  library's brand colour (`useBrandColor`).
 
 ## 4. Icon dictionary (lucide-react)
 
@@ -103,8 +106,12 @@ Always use these icons for these concepts. Size 16 in buttons/inline, 18 in nav,
 | Success | `CircleCheck` | Warning | `TriangleAlert` |
 | Error | `CircleX` | Info / help | `Info` |
 
-The mapping lives in code at `apps/admin/src/app/icons.js` (and later the student
-app's copy of the student-facing subset), so a concept's icon is changed in one place.
+The mapping lives in code at `packages/shared/src/icons/index.js`
+(`import { ICONS } from "@app/shared/icons"`), used by **both** apps, so a concept's
+icon is changed in one place. Student-app concepts: home `House`, profile/Me
+`CircleUserRound`, scan `ScanLine`, streak `Flame`, membership card `IdCard`,
+notifications `Bell` / `BellOff`, install app `Smartphone`, address `MapPin`;
+`close` `X`, `previous`/`next` `ChevronLeft`/`ChevronRight`.
 
 ## 5. Components (`@app/shared/ui`)
 
@@ -118,7 +125,10 @@ app's copy of the student-facing subset), so a concept's icon is changed in one 
 | `EmptyState` | empty lists | `icon`, `title`, `description` (what goes here + why), `action` |
 | `Badge` | statuses | tones: green · amber · red · slate · brand; `dot` for a status dot |
 | `Alert` | inline notices | tones with built-in icons; optional `title` |
-| `TextField` / `SelectField` / `MoneyField` | forms | label above, `hint` below, error replaces hint; `MoneyField` shows ₹ |
+| `TextField` / `SelectField` / `MoneyField` | forms | label above, `hint` below, error replaces hint; `MoneyField` shows ₹; `trailing` puts a small button inside the right edge; 16 px text on phones |
+| `PasswordField` | any password | lock icon + show/hide button (seeing it beats typing twice) |
+| `ReceiptView` | a receipt, admin and student | the one printable receipt layout; pages add only their own buttons (`no-print`) |
+| `useBrandColor(color)` | app shells | paints the `brand` colours + browser theme colour from the library's colour |
 | `Checkbox` | multi-choice | label right, optional description |
 | `SegmentedControl` | 2–6 exclusive choices shown at once | payment mode, seating mode, filters |
 | `Dialog` / `FormDialog` (admin app) | short tasks | title says the task ("Collect payment from Ravi") |
@@ -215,13 +225,22 @@ taken = brand, disabled = slate with strike-through. Always with a legend + coun
 | Day ledger | Date stepper (‹ today ›); collected/spent by mode; **Cash in hand** as the hero card |
 | Check-in desk | Two cards: the QR + today's code in large mono digits + present count; a phone box that sends the on-screen code. Result as a green/amber/red `Alert` (welcome / outside slot / dues) |
 | Attendance | Date stepper + slot `SegmentedControl`; present count stat; rows show slot/seat, in/out times, Outside-slot and Dues badges; "Mark present" searches students; CSV |
+| Member page → Student app card | Status badge (Not using / Waiting for first sign-in / Using, last signed in); "Give app access" or "Reset password" (confirm first). The one-time code is shown **once** in a dialog: huge mono digits, Copy, the 3 steps to read out, the app QR |
+| Settings → Student app | The app link + QR to print for the notice board, Copy link |
+
+**Student app** (milestone 7)
+
+| Screen | Key UX decisions |
+|---|---|
+| Sign in | Library logo/name big at the top (it's *their* library's app); phone + password; footer says how to get a code at the desk + tap-to-call; a bad link says so plainly |
+| Choose password | First time: "Hi Ravi, choose your password", the field is labelled "Code from the desk"; after saving → where they were going (e.g. a scanned check-in link) |
+| Home | Greeting by library time; **Today** card (checked in or not + Check in/out button); a card per booking with the seat number big, "Now" + time left during the slot; Fees card in red/amber/green; Attendance link; dismissible Install card (never a pop-up) |
+| Check-in | Best first: in-app scanner (Android) → phone camera link (`?code=`, checks in by itself, code then removed from the address) → typed code. Result fills the screen: green welcome / amber "noted: outside slot, fees due" / red with the reason and what to do |
+| Attendance | Two stats (in a row 🔥, this month); wall calendar, present days filled, staff-marked absent ringed red, today outlined; visit list with in–out times |
+| Fees | One stat that matches the mood (due now red / next fee amber / all paid green); Bills with status badges; Receipts → the shared receipt with Print / PDF. "Fees are paid at the desk" |
+| Me | Digital membership card (logo, photo/initials, name, member ID, seats); attendance, change password, install rows; notifications on/off with this phone marked; library address + call; Sign out |
 
 ## 11. Screen notes — still to build (follow these)
-
-**Student app (milestone 7)**
-- Home: greeting, "Your seat today" card (seat, slot, time left), next-due card with
-  a progress ring, check-in button. Bottom tabs with icons. Install prompt as a
-  dismissible card, not a pop-up.
 
 **Notifications & insights (milestone 8)**
 - Compose with a live phone-preview of the push; audience picker with recipient count.

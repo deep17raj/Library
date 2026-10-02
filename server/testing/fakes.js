@@ -87,6 +87,8 @@ export function testConfig(overrides = {}) {
       staffCookie: "sl_staff",
       cookieSecure: false,
       staffTokenTtlSeconds: 3600,
+      studentCookie: "sl_student",
+      studentTokenTtlSeconds: 3600,
     },
     superAdmin: { email: "", password: "", name: "Platform Owner" },
     ...overrides,
