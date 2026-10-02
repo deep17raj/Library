@@ -1,4 +1,5 @@
 import crypto from "node:crypto";
+import webPush from "web-push";
 import { ERROR_CODES } from "@app/shared/constants";
 import { AppError } from "../../http/AppError.js";
 import { bindDeps } from "../../lib/bindDeps.js";
@@ -10,6 +11,7 @@ import {
 import * as pushRepository from "./push.repository.js";
 
 const VAPID_SETTING = "vapid_keys";
+const CONTACT_EMAIL = "mailto:noreply@studylibrary.app";
 
 /**
  * @typedef {object} PushDeps
@@ -20,10 +22,6 @@ const VAPID_SETTING = "vapid_keys";
  * @property {{ keys?: { publicKey: string, privateKey: string } }} cache
  */
 
-/**
- * Web Push: the server's key pair and students' browser subscriptions. Sending
- * notifications arrives in milestone 8; this milestone lets students turn them on.
- */
 export function createPushService({
   db,
   repo = pushRepository,
@@ -31,7 +29,7 @@ export function createPushService({
 }) {
   return bindDeps(
     { db, repo, platform, cache: {} },
-    { getVapidKeys, getPublicKey, subscribe, unsubscribe, listDevices },
+    { getVapidKeys, getPublicKey, subscribe, unsubscribe, listDevices, sendToMembers },
   );
 }
 
@@ -103,6 +101,54 @@ async function listDevices(deps, ctx) {
     createdAt,
     updatedAt,
   }));
+}
+
+/**
+ * Send a push notification to all subscribed devices of the given members.
+ * Deletes subscriptions that return 404 or 410 (browser unsubscribed).
+ * @param {PushDeps} deps
+ * @returns {Promise<{sent: number, failed: number}>}
+ */
+async function sendToMembers(deps, tenantId, memberIds, payload) {
+  if (memberIds.length === 0) return { sent: 0, failed: 0 };
+  const keys = await getVapidKeys(deps);
+  const subs = await deps.repo.listSubscriptionsForMembers(deps.db, tenantId, memberIds);
+  if (subs.length === 0) return { sent: 0, failed: 0 };
+
+  const body = JSON.stringify(payload);
+  const options = {
+    vapidDetails: {
+      subject: CONTACT_EMAIL,
+      publicKey: keys.publicKey,
+      privateKey: keys.privateKey,
+    },
+    TTL: 86400,
+  };
+
+  let sent = 0;
+  let failed = 0;
+  const stale = [];
+  await Promise.allSettled(
+    subs.map(async (sub) => {
+      try {
+        await webPush.sendNotification(
+          { endpoint: sub.endpoint, keys: { p256dh: sub.p256dh, auth: sub.auth } },
+          body,
+          options,
+        );
+        sent++;
+      } catch (err) {
+        if (err.statusCode === 404 || err.statusCode === 410) {
+          stale.push(sub.id);
+        }
+        failed++;
+      }
+    }),
+  );
+  for (const id of stale) {
+    await deps.repo.deleteSubscriptionById(deps.db, id).catch(() => {});
+  }
+  return { sent, failed };
 }
 
 /** A readable name for a browser from its user agent; good enough to tell phones apart. */

@@ -51,6 +51,7 @@ import {
   SlidersHorizontal,
   Smartphone,
   Trash2,
+  TrendingUp,
   Undo2,
   User,
   UserCheck,
@@ -115,6 +116,7 @@ export const ICONS = Object.freeze({
   idCard: IdCard,
   notifications: Bell,
   notificationsOff: BellOff,
+  insights: TrendingUp,
   installApp: Smartphone,
   location: MapPin,
 });

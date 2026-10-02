@@ -36,6 +36,13 @@ export const router = createBrowserRouter(
           path: "fees/receipts/:id",
           lazy: page(() => import("./features/fees/ReceiptPage.jsx"), "ReceiptPage"),
         },
+        {
+          path: "notifications",
+          lazy: page(
+            () => import("./features/notifications/NotificationsPage.jsx"),
+            "NotificationsPage",
+          ),
+        },
         { path: "me", lazy: page(() => import("./features/me/MePage.jsx"), "MePage") },
         { path: "*", element: <Navigate to="/" replace /> },
       ],

@@ -93,8 +93,8 @@ Always use these icons for these concepts. Size 16 in buttons/inline, 18 in nav,
 | Change password | `KeyRound` | Check-in desk | `QrCode` |
 | Sign out | `LogOut` | Attendance / checked-in | `CalendarCheck` / `LogIn` |
 | Mark present | `UserCheck` | Mark absent | `UserX` |
-| Add | `Plus` | Notifications (M8) | `Bell` |
-| Edit | `Pencil` | Insights (M8) | `ChartColumn` |
+| Add | `Plus` | Notifications | `Bell` |
+| Edit | `Pencil` | Insights | `TrendingUp` |
 | Delete / void | `Trash2` / `Ban` | Mock tests (M9–10) | `GraduationCap` |
 | Move seat | `MoveRight` | Timer (attempt) | `Timer` |
 | Swap | `ArrowLeftRight` | Search | `Search` |
@@ -242,10 +242,11 @@ taken = brand, disabled = slate with strike-through. Always with a legend + coun
 
 ## 11. Screen notes — still to build (follow these)
 
-**Notifications & insights (milestone 8)**
-- Compose with a live phone-preview of the push; audience picker with recipient count.
-- Insights: one question per chart ("How full is each slot?"), numbers labelled,
-  no chart without a title and unit.
+**Notifications & insights (milestone 8)** ✅ Built.
+- Admin: Notifications page lists history, ComposeDialog has audience picker + live count.
+  Insights page shows occupancy by slot, revenue, dues ageing, new-vs-churned table.
+- Student: Notices tab with unread badge; mark-read on tap; paginated inbox.
+- Settings → Billing rules: auto-release toggle, fee reminder days, grace days.
 
 **Mock tests (milestones 9–10)**
 - Store: cards by exam with price (member price highlighted), "Free" badge.

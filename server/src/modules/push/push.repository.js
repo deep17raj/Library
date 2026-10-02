@@ -27,6 +27,20 @@ export async function deleteSubscription(db, tenantId, memberId, endpointHash) {
   );
 }
 
+export async function listSubscriptionsForMembers(db, tenantId, memberIds) {
+  if (memberIds.length === 0) return [];
+  return queryAll(
+    db,
+    `SELECT id, member_id, endpoint, p256dh, auth FROM push_subscriptions
+      WHERE tenant_id = ? AND member_id IN (?)`,
+    [tenantId, memberIds],
+  );
+}
+
+export async function deleteSubscriptionById(db, id) {
+  await execute(db, "DELETE FROM push_subscriptions WHERE id = ?", [id]);
+}
+
 /** A student's devices with notifications on (no keys or endpoints leave the server). */
 export async function listDevices(db, tenantId, memberId) {
   const rows = await queryAll(

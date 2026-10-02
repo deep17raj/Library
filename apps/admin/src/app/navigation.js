@@ -56,6 +56,23 @@ export const NAV_GROUPS = [
     ],
   },
   {
+    label: "Engage",
+    items: [
+      {
+        to: "/notifications",
+        label: "Notifications",
+        icon: ICONS.notifications,
+        visible: inLibraryWith(PERMISSIONS.NOTIFICATIONS_SEND),
+      },
+      {
+        to: "/insights",
+        label: "Insights",
+        icon: ICONS.insights,
+        visible: inLibraryWith(PERMISSIONS.INSIGHTS_VIEW),
+      },
+    ],
+  },
+  {
     label: "Setup",
     items: [
       { to: "/layout", label: "Halls & seats", icon: ICONS.layout, visible: inLibrary },

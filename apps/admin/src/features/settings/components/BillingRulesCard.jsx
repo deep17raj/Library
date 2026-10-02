@@ -1,6 +1,14 @@
 import { useEffect, useState } from "react";
 import { billingSettingsSchema } from "@app/shared/validation";
-import { Alert, Button, SectionCard, SegmentedControl, TextField, useToast } from "@app/shared/ui";
+import {
+  Alert,
+  Button,
+  Checkbox,
+  SectionCard,
+  SegmentedControl,
+  TextField,
+  useToast,
+} from "@app/shared/ui";
 import { applyServerErrors, useSchemaForm } from "../../../app/forms.js";
 import { ICONS } from "@app/shared/icons";
 import { useSaveBillingRules } from "../api.js";
@@ -83,9 +91,24 @@ export function BillingRulesCard({ settings }) {
           type="number"
           min={0}
           max={90}
-          hint="Used for reminders and seat release (coming with notifications)."
+          hint="Students with fees overdue beyond this many days may lose their seat."
           error={form.formState.errors.graceDays?.message}
           {...form.register("graceDays")}
+        />
+        <Checkbox
+          label="Auto-release seats for unpaid students"
+          description="When a student's oldest overdue fee exceeds the grace period above, end their booking automatically."
+          {...form.register("autoReleaseUnpaid")}
+        />
+        <TextField
+          className="sm:max-w-xs"
+          label="Fee reminder days before due date"
+          type="number"
+          min={0}
+          max={30}
+          hint="Send a push reminder this many days before a fee is due. Set to 0 to turn off."
+          error={form.formState.errors.feeReminderDaysBefore?.message}
+          {...form.register("feeReminderDaysBefore")}
         />
         <div>
           <Button type="submit" busy={save.isPending}>

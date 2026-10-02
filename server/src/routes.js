@@ -17,6 +17,11 @@ import { createMembersRouter } from "./modules/members/members.routes.js";
 import { createPlatformRouter } from "./modules/platform/platform.routes.js";
 import { findLibraryById, findLibraryBySlug } from "./modules/platform/platform.repository.js";
 import { createPortalPublicRouter, createPortalRouter } from "./modules/portal/portal.routes.js";
+import { createInsightsRouter } from "./modules/insights/insights.routes.js";
+import {
+  createNotificationsAdminRouter,
+  createNotificationsStudentRouter,
+} from "./modules/notifications/notifications.routes.js";
 import { createPushPublicRouter, createPushRouter } from "./modules/push/push.routes.js";
 import { createSettingsRouter } from "./modules/settings/settings.routes.js";
 import { createSlotsRouter } from "./modules/slots/slots.routes.js";
@@ -79,6 +84,7 @@ function createStudentApiRouter({ db, config, services }) {
   student.use(createStudentPasswordRouter({ studentsService: services.studentsService, config }));
   student.use(createPortalRouter(services));
   student.use(createPushRouter(services));
+  student.use(createNotificationsStudentRouter(services));
   return student;
 }
 
@@ -97,5 +103,7 @@ function createAdminRouter(services) {
   admin.use(createLedgerRouter(services));
   admin.use(createAttendanceRouter(services));
   admin.use(createAppAccessRouter(services));
+  admin.use(createNotificationsAdminRouter(services));
+  admin.use(createInsightsRouter(services));
   return admin;
 }

@@ -1338,9 +1338,10 @@ before building or changing any screen.
     library", platform settings, **content**: series → tests → sections → questions
     editor, CSV/XLSX import with preview, publish; **sales & revenue share** report
 
-**Student app** (`/s/:slug`, installable PWA, branded per library). Built in M7: 1–5, 7
-(push on/off lives in Me; the notifications inbox comes with M8). Bottom tabs: Home,
-Check-in, Fees, Me (+ Tests in M9–10). Attendance opens from Home and Me.
+**Student app** (`/s/:slug`, installable PWA, branded per library). Built in M7: 1–5, 7;
+M8 adds the Notifications inbox tab with unread badge. Push on/off lives in Me.
+Bottom tabs: Home, Check-in, Notices, Fees, Me (+ Tests in M9–10). Attendance opens
+from Home and Me.
 1. Login (phone + password) · first-login password change
 2. **Home** — my seat(s) & slot(s), next-due card, today's check-in status, latest notice
 3. **Check-in** — scan desk QR (camera), result screen (warns outside slot / dues)
@@ -1384,7 +1385,7 @@ summary + manual test list.
 | 5 | **Money:** invoice generation, payments with allocation, partial/credit, receipts, void, deposits & refunds, dues screen, expenses, day ledger, CSV, jobs scheduler. | Billing tests pass; partial payment leaves correct dues; ledger matches. |
 | 6 ✅ | **Check-in & attendance:** daily code, desk QR/kiosk, slot-time check (off/warn/block), dues gate, check-out, attendance screens. | Check-in outside slot warns/blocks per setting. |
 | 7 ✅ | **Student app:** login + password change, home, my seat, check-in scan, attendance, fees & receipts, PWA install with per-library manifest, push subscribe. | Student installs app on Android, checks in by QR. |
-| 8 | **Notifications & insights:** announcements, inbox, fee-due / seat-expiry / waitlist automations, auto-release job, dashboard + insights. | Reminder arrives once (deduped); occupancy % correct. |
+| 8 ✅ | **Notifications & insights:** announcements, inbox, fee-due / seat-expiry / waitlist automations, auto-release job, dashboard + insights. | Reminder arrives once (deduped); occupancy % correct. |
 | 9 | **Mock-test content:** platform editor, sections/questions, CSV/XLSX import with preview, publish rules, student preview. | Import 100-question CSV; errors shown per row. |
 | 10 | **Mock-test store & attempts:** catalog, pricing, PaymentProvider + Razorpay + webhook + reconcile, entitlements, attempt engine, scoring, results, solutions, leaderboard, sales reports. | Test-mode purchase via webhook only; refresh mid-test resumes; timeout auto-submits. |
 | 11 | **Deploy guide & hardening:** `DEPLOY-SHARED-HOSTING.md`, `.env.example`, cron setup, backup notes, security review pass. | Fresh cPanel install following only the guide works. |

@@ -93,4 +93,5 @@ export const billingSettingsSchema = z.object({
   defaultCollection: z.enum(["advance", "arrears"]),
   graceDays: z.coerce.number().int().min(0, "0 or more").max(90, "At most 90 days"),
   autoReleaseUnpaid: z.boolean(),
+  feeReminderDaysBefore: z.coerce.number().int().min(0, "0 or more").max(30, "At most 30 days"),
 });

@@ -3,11 +3,13 @@ import { ICONS } from "@app/shared/icons";
 import { Alert, Button, cx } from "@app/shared/ui";
 import { useApplyBranding } from "./branding.js";
 import { useMe } from "./session.js";
+import { useUnreadCount } from "../features/notifications/api.js";
 
 // Bottom tabs (UI-GUIDE §3): one thumb-reachable bar. "Tests" joins in milestone 9–10.
 const TABS = [
   { to: "/", label: "Home", icon: ICONS.home, end: true },
   { to: "/checkin", label: "Check-in", icon: ICONS.checkin },
+  { to: "/notifications", label: "Notices", icon: ICONS.notifications },
   { to: "/fees", label: "Fees", icon: ICONS.payment },
   { to: "/me", label: "Me", icon: ICONS.profile },
 ];
@@ -81,12 +83,14 @@ function AppHeader({ library }) {
 }
 
 function BottomTabs() {
+  const { data: unread } = useUnreadCount();
+  const unreadCount = unread?.count ?? 0;
   return (
     <nav
       aria-label="Main"
       className="no-print fixed inset-x-0 bottom-0 z-10 border-t border-slate-200 bg-white pb-[env(safe-area-inset-bottom)]"
     >
-      <ul className="mx-auto grid max-w-lg grid-cols-4">
+      <ul className="mx-auto grid max-w-lg grid-cols-5">
         {TABS.map(({ to, label, icon: Icon, end }) => (
           <li key={to}>
             <NavLink
@@ -103,11 +107,16 @@ function BottomTabs() {
                 <>
                   <span
                     className={cx(
-                      "flex h-7 w-12 items-center justify-center rounded-full transition-colors",
+                      "relative flex h-7 w-12 items-center justify-center rounded-full transition-colors",
                       isActive && "bg-brand-light",
                     )}
                   >
                     <Icon className="h-5 w-5" aria-hidden="true" />
+                    {to === "/notifications" && unreadCount > 0 && (
+                      <span className="absolute -right-0.5 -top-0.5 flex h-4 min-w-4 items-center justify-center rounded-full bg-red-500 px-1 text-[10px] font-bold text-white">
+                        {unreadCount > 9 ? "9+" : unreadCount}
+                      </span>
+                    )}
                   </span>
                   {label}
                 </>

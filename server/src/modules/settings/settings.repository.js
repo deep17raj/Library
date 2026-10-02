@@ -20,6 +20,7 @@ function toSettings(row) {
       defaultCollection: row.default_collection,
       graceDays: row.grace_days,
       autoReleaseUnpaid: Boolean(row.auto_release_unpaid),
+      feeReminderDaysBefore: row.fee_reminder_days_before ?? 3,
     },
     checkin: {
       slotCheckMode: row.slot_check_mode,
@@ -70,7 +71,7 @@ export async function updateBilling(db, tenantId, values) {
     db,
     `UPDATE library_settings
         SET billing_anchor = ?, first_period_billing = ?, default_collection = ?, grace_days = ?,
-            auto_release_unpaid = ?
+            auto_release_unpaid = ?, fee_reminder_days_before = ?
       WHERE tenant_id = ?`,
     [
       values.billingAnchor,
@@ -78,6 +79,7 @@ export async function updateBilling(db, tenantId, values) {
       values.defaultCollection,
       values.graceDays,
       values.autoReleaseUnpaid ? 1 : 0,
+      values.feeReminderDaysBefore,
       tenantId,
     ],
   );

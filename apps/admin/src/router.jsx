@@ -74,6 +74,17 @@ export const router = createBrowserRouter(
         { path: "slots", lazy: page(() => import("./features/slots/SlotsPage.jsx"), "SlotsPage") },
         { path: "staff", lazy: page(() => import("./features/staff/StaffPage.jsx"), "StaffPage") },
         {
+          path: "notifications",
+          lazy: page(
+            () => import("./features/notifications/NotificationsPage.jsx"),
+            "NotificationsPage",
+          ),
+        },
+        {
+          path: "insights",
+          lazy: page(() => import("./features/insights/InsightsPage.jsx"), "InsightsPage"),
+        },
+        {
           path: "settings",
           lazy: page(() => import("./features/settings/SettingsPage.jsx"), "SettingsPage"),
         },
