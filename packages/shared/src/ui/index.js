@@ -11,6 +11,7 @@ export {
   Card,
   SectionCard,
   PageHeader,
+  PageTitleContext,
   EmptyState,
   StatCard,
   Spinner,

@@ -1,15 +1,15 @@
-import { Navigate, NavLink, Outlet, useLocation } from "react-router-dom";
+import { Link, Navigate, NavLink, Outlet, useLocation } from "react-router-dom";
 import { ICONS } from "@app/shared/icons";
 import { Alert, Button, cx } from "@app/shared/ui";
 import { useApplyBranding } from "./branding.js";
 import { useMe } from "./session.js";
 import { useUnreadCount } from "../features/notifications/api.js";
 
-// Bottom tabs (UI-GUIDE §3): one thumb-reachable bar. "Tests" joins in milestone 9–10.
+// Bottom tabs (UI-GUIDE §3): one thumb-reachable bar.
 const TABS = [
   { to: "/", label: "Home", icon: ICONS.home, end: true },
   { to: "/checkin", label: "Check-in", icon: ICONS.checkin },
-  { to: "/notifications", label: "Notices", icon: ICONS.notifications },
+  { to: "/attendance", label: "History", icon: ICONS.attendance },
   { to: "/fees", label: "Fees", icon: ICONS.payment },
   { to: "/me", label: "Me", icon: ICONS.profile },
 ];
@@ -72,19 +72,31 @@ export function LibraryMark({ library, size = "md" }) {
 }
 
 function AppHeader({ library }) {
+  const { data: unread } = useUnreadCount();
+  const unreadCount = unread?.count ?? 0;
   return (
     <header className="no-print sticky top-0 z-10 border-b border-slate-200/70 bg-white/90 pt-[env(safe-area-inset-top)] backdrop-blur">
       <div className="mx-auto flex max-w-lg items-center gap-3 px-4 py-2.5">
         <LibraryMark library={library} />
-        <p className="truncate font-semibold text-slate-900">{library.name}</p>
+        <p className="flex-1 truncate font-semibold text-slate-900">{library.name}</p>
+        <Link
+          to="/notifications"
+          aria-label="Notifications"
+          className="relative flex h-9 w-9 items-center justify-center rounded-full text-slate-600 transition-colors hover:bg-slate-100"
+        >
+          <ICONS.notifications className="h-5 w-5" aria-hidden="true" />
+          {unreadCount > 0 && (
+            <span className="absolute right-1 top-1 flex h-3.5 min-w-3.5 items-center justify-center rounded-full bg-red-500 px-0.5 text-[9px] font-bold text-white">
+              {unreadCount > 9 ? "9+" : unreadCount}
+            </span>
+          )}
+        </Link>
       </div>
     </header>
   );
 }
 
 function BottomTabs() {
-  const { data: unread } = useUnreadCount();
-  const unreadCount = unread?.count ?? 0;
   return (
     <nav
       aria-label="Main"
@@ -107,16 +119,11 @@ function BottomTabs() {
                 <>
                   <span
                     className={cx(
-                      "relative flex h-7 w-12 items-center justify-center rounded-full transition-colors",
+                      "flex h-7 w-12 items-center justify-center rounded-full transition-colors",
                       isActive && "bg-brand-light",
                     )}
                   >
                     <Icon className="h-5 w-5" aria-hidden="true" />
-                    {to === "/notifications" && unreadCount > 0 && (
-                      <span className="absolute -right-0.5 -top-0.5 flex h-4 min-w-4 items-center justify-center rounded-full bg-red-500 px-1 text-[10px] font-bold text-white">
-                        {unreadCount > 9 ? "9+" : unreadCount}
-                      </span>
-                    )}
                   </span>
                   {label}
                 </>

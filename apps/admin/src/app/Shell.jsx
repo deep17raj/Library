@@ -1,8 +1,8 @@
 import { useEffect, useState } from "react";
-import { Link, Navigate, NavLink, Outlet, useLocation } from "react-router-dom";
+import { Link, Navigate, NavLink, Outlet, useLocation, useNavigate } from "react-router-dom";
 import { Menu, X } from "lucide-react";
 import { ROLE_LABELS } from "@app/shared/constants";
-import { IconButton, Spinner, cx } from "@app/shared/ui";
+import { IconButton, PageTitleContext, Spinner, cx } from "@app/shared/ui";
 import { useLogout } from "../features/auth/api.js";
 import { useLibrarySettings } from "../features/settings/api.js";
 import { ICONS } from "@app/shared/icons";
@@ -20,6 +20,8 @@ export function Shell() {
   const { data: user, isLoading } = useSession();
   const location = useLocation();
   const [drawerOpen, setDrawerOpen] = useState(false);
+  // Pages report their title here; on phones it replaces the library name in the top bar.
+  const [pageTitle, setPageTitle] = useState(null);
   const { data: settings } = useLibrarySettings();
   useBranding(settings);
   useEffect(() => setDrawerOpen(false), [location.pathname]);
@@ -31,7 +33,7 @@ export function Shell() {
   return (
     <div className="min-h-screen md:flex">
       <header className="no-print sticky top-0 z-20 flex items-center justify-between border-b border-slate-200 bg-white/90 px-4 py-2.5 backdrop-blur md:hidden">
-        <Brand title={title} logoUrl={settings?.logoUrl} />
+        <Brand title={pageTitle || title} logoUrl={settings?.logoUrl} />
         <IconButton icon={Menu} label="Open menu" onClick={() => setDrawerOpen(true)} />
       </header>
       {drawerOpen && (
@@ -62,7 +64,9 @@ export function Shell() {
       </aside>
       <main className="min-w-0 flex-1 px-4 py-6 md:px-8 md:py-8">
         <div className="mx-auto max-w-6xl">
-          <Outlet />
+          <PageTitleContext.Provider value={setPageTitle}>
+            <Outlet />
+          </PageTitleContext.Provider>
         </div>
       </main>
     </div>
@@ -120,6 +124,7 @@ function SidebarNav({ user }) {
 
 function UserCard({ user }) {
   const logout = useLogout();
+  const navigate = useNavigate();
   const initials = user.name
     .split(/\s+/)
     .slice(0, 2)
@@ -142,7 +147,13 @@ function UserCard({ user }) {
         <NavLink to="/account/password" className={link}>
           <ICONS.password className="h-4 w-4" aria-hidden="true" /> Password
         </NavLink>
-        <button type="button" onClick={() => logout.mutate()} className={link}>
+        <button
+          type="button"
+          onClick={() =>
+            logout.mutate(undefined, { onSettled: () => navigate("/login", { replace: true }) })
+          }
+          className={link}
+        >
           <ICONS.signOut className="h-4 w-4" aria-hidden="true" /> Sign out
         </button>
       </div>

@@ -1,3 +1,4 @@
+import { createContext, useContext, useEffect } from "react";
 import { cx } from "./cx.js";
 
 /** White surface that groups related content. */
@@ -31,15 +32,29 @@ export function SectionCard({ icon: Icon, title, description, actions, className
 }
 
 /**
+ * Set by an app shell that shows the page title in its own phone top bar. When present,
+ * PageHeader reports its title there and hides its own heading below the md breakpoint.
+ * @type {React.Context<((title: React.ReactNode) => void) | null>}
+ */
+export const PageTitleContext = createContext(null);
+
+/**
  * Top of every page: icon tile, title, what the page is for, primary action.
  * `back` renders above the title (e.g. a link to the list).
  */
 export function PageHeader({ icon: Icon, title, description, actions, back }) {
+  const reportTitle = useContext(PageTitleContext);
+  useEffect(() => {
+    if (!reportTitle) return undefined;
+    reportTitle(title);
+    return () => reportTitle(null);
+  }, [reportTitle, title]);
+
   return (
-    <header className="mb-6">
+    <header className={cx("mb-6", reportTitle && !actions && !back && "max-md:hidden")}>
       {back && <div className="mb-3">{back}</div>}
       <div className="flex flex-wrap items-start justify-between gap-4">
-        <div className="flex items-start gap-3">
+        <div className={cx("flex items-start gap-3", reportTitle && "max-md:hidden")}>
           {Icon && (
             <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-brand-light text-brand-dark">
               <Icon className="h-5 w-5" aria-hidden="true" />
@@ -81,13 +96,14 @@ const STAT_TONES = {
 };
 
 /** One number that matters, with what it means. */
+// Stacks icon above the number on phones so two cards fit side by side.
 export function StatCard({ icon: Icon, label, value, hint, tone = "brand" }) {
   return (
-    <Card className="flex items-start gap-4">
+    <Card className="flex flex-col items-start gap-2 p-4 sm:flex-row sm:gap-4 sm:p-5">
       {Icon && (
         <span
           className={cx(
-            "flex h-11 w-11 shrink-0 items-center justify-center rounded-xl",
+            "flex h-9 w-9 shrink-0 items-center justify-center rounded-xl sm:h-11 sm:w-11",
             STAT_TONES[tone],
           )}
         >
@@ -96,7 +112,7 @@ export function StatCard({ icon: Icon, label, value, hint, tone = "brand" }) {
       )}
       <div className="min-w-0">
         <p className="text-sm text-slate-500">{label}</p>
-        <p className="mt-0.5 text-2xl font-semibold tabular-nums tracking-tight text-slate-900">
+        <p className="mt-0.5 text-xl font-semibold tabular-nums tracking-tight text-slate-900 sm:text-2xl">
           {value}
         </p>
         {hint && <p className="mt-0.5 text-xs text-slate-500">{hint}</p>}

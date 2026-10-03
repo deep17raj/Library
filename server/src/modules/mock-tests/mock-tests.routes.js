@@ -34,7 +34,7 @@ export function createMockTestsPlatformRouter({ mockTestsService: svc }) {
       }
       const pricePaise = parseInt(req.body.pricePaise ?? "0", 10) || 0;
       const test = await svc.create(
-        { actor: { id: req.user.id } },
+        { actor: req.actor },
         {
           title: req.body.title?.trim() ?? "Untitled",
           description: req.body.description?.trim() ?? "",
@@ -49,7 +49,7 @@ export function createMockTestsPlatformRouter({ mockTestsService: svc }) {
   router.post(
     "/mock-tests/:id/publish",
     asyncHandler(async (req, res) => {
-      const test = await svc.setPublished({ actor: req.user }, req.params.id, true);
+      const test = await svc.setPublished({ actor: req.actor }, req.params.id, true);
       res.json(test);
     }),
   );
@@ -57,7 +57,7 @@ export function createMockTestsPlatformRouter({ mockTestsService: svc }) {
   router.post(
     "/mock-tests/:id/unpublish",
     asyncHandler(async (req, res) => {
-      const test = await svc.setPublished({ actor: req.user }, req.params.id, false);
+      const test = await svc.setPublished({ actor: req.actor }, req.params.id, false);
       res.json(test);
     }),
   );

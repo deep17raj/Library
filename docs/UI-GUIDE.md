@@ -119,9 +119,9 @@ notifications `Bell` / `BellOff`, install app `Smartphone`, address `MapPin`;
 |---|---|---|
 | `Button` | actions | `variant`: primary · secondary · ghost · danger · subtle; `size`: sm · md; `icon` prop puts an icon before the label; `busy` disables + spins |
 | `IconButton` | toolbars, row actions | requires `label` (becomes `aria-label` + tooltip) |
-| `PageHeader` | top of every page | `icon`, `title`, `description`, `actions`, optional `back` link |
+| `PageHeader` | top of every page | `icon`, `title`, `description`, `actions`, optional `back` link; inside the admin shell (`PageTitleContext`) the heading hides on phones and the title moves to the top bar |
 | `Card` / `SectionCard` | grouping | `SectionCard` adds `title`, `icon`, `description`, `actions` header |
-| `StatCard` | one number that matters | `label`, `value`, `icon`, `tone`, `hint`; numbers `tabular-nums` |
+| `StatCard` | one number that matters | `label`, `value`, `icon`, `tone`, `hint`; numbers `tabular-nums`; rows of four use `grid-cols-2` on phones |
 | `EmptyState` | empty lists | `icon`, `title`, `description` (what goes here + why), `action` |
 | `Badge` | statuses | tones: green · amber · red · slate · brand; `dot` for a status dot |
 | `Alert` | inline notices | tones with built-in icons; optional `title` |

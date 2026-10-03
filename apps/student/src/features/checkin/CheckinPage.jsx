@@ -6,6 +6,7 @@ import { useMe } from "../../app/session.js";
 import { codeFromScan, useCheckin } from "./api.js";
 import { CheckinResult, describeError, describeOutcome } from "./components/CheckinResult.jsx";
 import { canScanInApp, QrScanner } from "./components/QrScanner.jsx";
+import { cx } from "@app/shared/ui";
 
 /**
  * Check in by the desk's QR (UI-GUIDE §10 Student check-in). Three ways, best first:
@@ -15,6 +16,7 @@ import { canScanInApp, QrScanner } from "./components/QrScanner.jsx";
 export function CheckinPage() {
   const [params, setParams] = useSearchParams();
   const { data: me } = useMe();
+  const inside = !!(me?.checkIns[0] && !me.checkIns[0].checkOutAt);
   const checkin = useCheckin();
   const [result, setResult] = useState(null);
   const [scanning, setScanning] = useState(false);
@@ -55,10 +57,19 @@ export function CheckinPage() {
     <>
       <PageHeader
         icon={ICONS.checkin}
-        title="Check in"
-        description="Scan the QR code at the library desk. Scan again when you leave."
+        title={inside ? "Check out" : "Check in"}
+        description={
+          inside
+            ? "Scan the QR at the desk when you leave."
+            : "Scan the QR code at the library desk. Scan again when you leave."
+        }
       />
       <div className="flex flex-col gap-4">
+        {inside && (
+          <div className="rounded-2xl bg-orange-50 px-4 py-3 text-sm text-orange-800 ring-1 ring-orange-200">
+            You&apos;re currently checked in. Scan the desk QR to check out.
+          </div>
+        )}
         <Alert tone="warning">{hint}</Alert>
         {canScanInApp() ? (
           scanning ? (
@@ -71,11 +82,14 @@ export function CheckinPage() {
           ) : (
             <Button
               icon={ICONS.scan}
-              className="h-14 text-base"
+              className={cx(
+                "h-14 text-base",
+                inside && "!bg-orange-500 !shadow-orange-200 hover:!bg-orange-600",
+              )}
               busy={checkin.isPending}
               onClick={() => setScanning(true)}
             >
-              Scan the desk QR
+              {inside ? "Scan to check out" : "Scan the desk QR"}
             </Button>
           )
         ) : (

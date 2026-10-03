@@ -78,7 +78,7 @@ function LedgerDay({ ledger }) {
         </div>
         <ICONS.payment className="h-10 w-10 opacity-40" aria-hidden="true" />
       </Card>
-      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+      <div className="grid grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-4">
         <StatCard
           icon={ICONS.payment}
           tone="green"
