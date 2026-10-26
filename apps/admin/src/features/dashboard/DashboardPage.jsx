@@ -1,8 +1,11 @@
-import { Link, useNavigate } from "react-router-dom";
+import { Link } from "react-router-dom";
 import { formatRupees } from "@app/shared/money";
+import { displayDate } from "@app/shared/time";
 import { displaySlotTimes } from "@app/shared/slots";
-import { Alert, Button, PageHeader, SectionCard, Skeleton, StatCard } from "@app/shared/ui";
+import { PERMISSIONS } from "@app/shared/constants";
+import { Alert, Card, SectionCard, Skeleton, StatCard } from "@app/shared/ui";
 import { ICONS } from "@app/shared/icons";
+import { useCan } from "../../app/permissions.js";
 import { useSession } from "../../app/session.js";
 import { useDashboard } from "../ledger/api.js";
 
@@ -10,41 +13,16 @@ import { useDashboard } from "../ledger/api.js";
 export function DashboardPage() {
   const { data: user } = useSession();
   const { data, isLoading, error } = useDashboard();
-  const navigate = useNavigate();
   const firstName = user.name.split(" ")[0];
 
   return (
-    <>
-      <PageHeader
-        icon={ICONS.dashboard}
-        title={`Hello, ${firstName}`}
-        description="Today at your library."
-        actions={
-          <>
-            <Button variant="secondary" icon={ICONS.checkin} onClick={() => navigate("/checkin")}>
-              Check-in desk
-            </Button>
-            <Button variant="secondary" icon={ICONS.seatMap} onClick={() => navigate("/seat-map")}>
-              Seat map
-            </Button>
-            <Button icon={ICONS.addMember} onClick={() => navigate("/members/new")}>
-              Add member
-            </Button>
-          </>
-        }
-      />
+    <div className="flex flex-col gap-6">
+      <Hero firstName={firstName} today={data?.today} data={data} />
       <Alert tone="error">{error?.message}</Alert>
       {isLoading && <Skeleton rows={3} />}
       {data && (
-        <div className="flex flex-col gap-6">
+        <>
           <div className="grid grid-cols-2 gap-3 sm:gap-4 xl:grid-cols-4">
-            <StatCard
-              icon={ICONS.payment}
-              tone="green"
-              label="Collected today"
-              value={formatRupees(data.collectedTodayPaise)}
-              hint={`${data.paymentsToday} receipts`}
-            />
             <StatCard
               icon={ICONS.dues}
               tone={data.outstandingPaise ? "red" : "green"}
@@ -65,14 +43,84 @@ export function DashboardPage() {
               value={data.waiting}
               hint={`${data.seats} seats in the library`}
             />
+            <StatCard
+              icon={ICONS.receipt}
+              tone="green"
+              label="Receipts today"
+              value={data.paymentsToday}
+              hint={`${formatRupees(data.collectedTodayPaise)} collected`}
+            />
           </div>
+          <QuickActions />
           <div className="grid gap-6 lg:grid-cols-2">
             <SlotFill slots={data.slots} seats={data.seats} />
             <LongestOverdue members={data.longestOverdue} />
           </div>
-        </div>
+        </>
       )}
-    </>
+    </div>
+  );
+}
+
+/** The app-style header: a brand gradient card with the greeting and today's takings. */
+function Hero({ firstName, today, data }) {
+  return (
+    <Card className="bg-gradient-to-br from-brand to-brand-dark text-white ring-0">
+      <p className="text-sm text-white/80">
+        Hello, {firstName}
+        {today && ` · ${displayDate(today)}`}
+      </p>
+      <p className="mt-3 text-xs font-medium uppercase tracking-wider text-white/70">
+        Collected today
+      </p>
+      <p className="mt-1 text-3xl font-semibold tabular-nums tracking-tight">
+        {data ? formatRupees(data.collectedTodayPaise) : "—"}
+      </p>
+      {data && (
+        <p className="mt-1 text-sm text-white/80">
+          {data.paymentsToday} {data.paymentsToday === 1 ? "receipt" : "receipts"} ·{" "}
+          {formatRupees(data.outstandingPaise)} still owed
+        </p>
+      )}
+    </Card>
+  );
+}
+
+const QUICK_ACTIONS = [
+  { to: "/checkin", label: "Check-in", icon: ICONS.checkin, permission: null },
+  {
+    to: "/members/new",
+    label: "Add member",
+    icon: ICONS.addMember,
+    permission: PERMISSIONS.MEMBERS_MANAGE,
+  },
+  { to: "/seat-map", label: "Seat map", icon: ICONS.seatMap, permission: null },
+  { to: "/dues", label: "Dues", icon: ICONS.dues, permission: null },
+];
+
+/** The four big tap targets for what staff do most — the app's home-screen shortcuts. */
+function QuickActions() {
+  const canManageMembers = useCan(PERMISSIONS.MEMBERS_MANAGE);
+  const actions = QUICK_ACTIONS.filter(
+    (action) => action.permission !== PERMISSIONS.MEMBERS_MANAGE || canManageMembers,
+  );
+  return (
+    <Card className="p-3">
+      <div className="grid grid-cols-4 gap-1">
+        {actions.map(({ to, label, icon: Icon }) => (
+          <Link
+            key={to}
+            to={to}
+            className="flex flex-col items-center gap-2 rounded-xl px-1 py-3 text-center text-xs font-medium text-slate-700 transition-colors hover:bg-slate-50"
+          >
+            <span className="flex h-11 w-11 items-center justify-center rounded-2xl bg-brand-light text-brand-dark">
+              <Icon className="h-5 w-5" aria-hidden="true" />
+            </span>
+            {label}
+          </Link>
+        ))}
+      </div>
+    </Card>
   );
 }
 

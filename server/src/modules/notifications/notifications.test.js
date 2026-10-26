@@ -56,6 +56,25 @@ test("announce creates notification, inserts recipients and pushes", async () =>
   assert.equal(repo.recipients.length, 2);
   assert.equal(push.calls.length, 1);
   assert.equal(push.calls[0].payload.title, "Library closed");
+  // Notices stack and aren't urgent; the service worker reads `important`/`tag`.
+  assert.equal(push.calls[0].payload.important, false);
+  assert.equal(push.calls[0].payload.tag, "announcement");
+});
+
+test("fee reminders push as urgent so they stay on screen and replace stale ones", async () => {
+  const repo = fakeRepo();
+  const push = fakePush();
+  const service = createNotificationsService({ db: fakeDb(), push, repo });
+  await service.sendSystemNotification(TENANT, {
+    kind: "fee_due",
+    title: "Fee reminder",
+    body: "Your fee is due today",
+    audience: { type: "all" },
+    dedupeKey: "fee_due:inv-7:d-0",
+  });
+  assert.equal(push.calls.length, 1);
+  assert.equal(push.calls[0].payload.important, true);
+  assert.equal(push.calls[0].payload.tag, "fee_due");
 });
 
 test("sendSystemNotification skips if dedupe key already exists", async () => {

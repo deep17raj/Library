@@ -110,7 +110,8 @@ The mapping lives in code at `packages/shared/src/icons/index.js`
 (`import { ICONS } from "@app/shared/icons"`), used by **both** apps, so a concept's
 icon is changed in one place. Student-app concepts: home `House`, profile/Me
 `CircleUserRound`, scan `ScanLine`, streak `Flame`, membership card `IdCard`,
-notifications `Bell` / `BellOff`, install app `Smartphone`, address `MapPin`;
+notifications `Bell` / `BellOff`, install app `Smartphone`, address `MapPin`,
+WhatsApp reminder `MessageCircle`;
 `close` `X`, `previous`/`next` `ChevronLeft`/`ChevronRight`.
 
 ## 5. Components (`@app/shared/ui`)
@@ -188,6 +189,12 @@ taken = brand, disabled = slate with strike-through. Always with a legend + coun
   native `<dialog>` (focus trap + Esc).
 - Works at 360 px wide: no horizontal scroll except intentional tab strips; tables
   collapse to stacked rows; touch targets ≥ 40 px.
+- **Installed-app feel (admin PWA).** On phones the admin app shows a fixed **bottom tab
+  bar** (Home · Members · Attendance · Payments · Settings; see `app/BottomNav.jsx` +
+  `BOTTOM_NAV` in `app/navigation.js`) — everything else stays in the hamburger drawer.
+  The top bar carries the menu, title and a one-tap "add member". Respect the safe-area
+  insets (`env(safe-area-inset-*)`) at the top bar and bottom bar, and keep `main`'s
+  bottom padding clear of the bar. The sidebar replaces the bar from `md:` up.
 
 ## 9. Screen checklist (every new or changed screen)
 
@@ -207,7 +214,7 @@ taken = brand, disabled = slate with strike-through. Always with a legend + coun
 | Screen | Key UX decisions |
 |---|---|
 | Login | Brand panel + form card; one field per line; error above the form |
-| Dashboard | Today at a glance: stat cards (active members, today's collection, dues, free seats) + quick actions (Add member, Collect payment, Seat map) |
+| Dashboard | App-style home: a brand-gradient hero (greeting + today's collection), a 2×2 stat grid (owed now, active members, waiting, receipts today), a 4-tile quick-action row (Check-in, Add member, Seat map, Dues), then slot fill + longest overdue. No `PageHeader` here — the hero is the header |
 | Seat map | Hall tabs + slot chips; colour legend with counts; tile shows seat + who's in it now; click → panel with occupants per slot and actions |
 | Members | Search-first; rows show photo/initials, code, phone, where they sit |
 | Add member | Page, not dialog. Sections: Student → Seat bookings → Joining charges. Seat picker shows only seats free in the chosen slot, with filters; live fee; "Booking 2: …" errors on that row |

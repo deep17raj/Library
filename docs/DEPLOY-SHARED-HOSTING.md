@@ -17,9 +17,19 @@ of memory, so the built files are uploaded instead.
 
 ## 2. Database (cPanel → MySQL Databases)
 
-Create a database and a user, add the user to the database with **All Privileges**.
-Note the prefixed names (e.g. `cpuser_library`). No SQL import: tables are created on
-first start by `server/src/migrations/`.
+Create a database and a user, add the user to the database with **All Privileges**
+(the app runs its own migrations, so it needs CREATE/ALTER, not just read/write).
+Note the prefixed names (e.g. `cpuser_library`) — they go in `.env`. **No SQL import:**
+tables are created and upgraded on every start by `server/src/migrations/`.
+
+Set the database's character set to **utf8mb4** if cPanel asks (Hindi names, ₹).
+
+On a server where you *do* have MySQL root (VPS, or your own machine), skip the UI and
+run `scripts/create-database.sql` instead — edit the password in it, then:
+
+```
+mysql -u root -p < scripts/create-database.sql
+```
 
 ## 3. Upload
 

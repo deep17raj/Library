@@ -64,11 +64,20 @@ self.addEventListener("push", (event) => {
     data = { body: event.data ? event.data.text() : "" };
   }
   const scope = self.registration.scope;
+  // `tag` lets a fresh reminder replace the stale one instead of stacking; `renotify`
+  // re-alerts (sound + vibrate) when it does. Urgent alerts (fees, seat expiry) stay on
+  // screen until tapped. Custom sound files aren't possible on web push — the phone plays
+  // its default notification sound; `vibrate` is what makes it feel like an app.
+  const urgent = data.important === true;
   event.waitUntil(
     self.registration.showNotification(data.title || "Library update", {
       body: data.body || "",
       icon: `${scope}icon-192.png`,
       badge: `${scope}icon-192.png`,
+      tag: data.tag || undefined,
+      renotify: data.tag ? true : undefined,
+      requireInteraction: urgent,
+      vibrate: urgent ? [200, 100, 200, 100, 200] : [200, 100, 200],
       data: { url: data.url || scope },
     }),
   );

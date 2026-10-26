@@ -79,15 +79,18 @@ with `require`).
 │     └─ modules/       one folder per feature (list below)
 │        └─ seats/      seats.routes.js  seats.controller.js  seats.service.js
 │                       seats.repository.js  seats.validation.js  seats.test.js  README.md
-├─ apps/admin/          React + Vite + Tailwind, served at /admin
+├─ apps/admin/          React + Vite + Tailwind PWA, served at /admin (installable)
 │  └─ src/
 │     ├─ main.jsx  App.jsx  router.jsx
 │     ├─ app/           providers (QueryClient, Session), Shell (sidebar/topbar), guards
 │     └─ features/      seat-map/ layout/ slots/ members/ … (one folder per feature)
 │        └─ seat-map/   SeatMapPage.jsx  components/  hooks/  api.js
+│     ·  public/sw.js (served at /admin/sw.js); manifest/icons from server/adminShell.js
 └─ apps/student/        React + Vite + Tailwind PWA: files at /student/*, app at /s/:slug/
    └─ src/  main.jsx router.jsx app/ features/   ·  public/sw.js (served at /sw.js)
 ```
+Both apps share the install/offline plumbing in `packages/shared/src/pwa` (capture the
+`beforeinstallprompt`, `useInstallPrompt`, register the service worker).
 
 **Server modules** (`server/src/modules/`): `auth`, `platform` (super admin: libraries,
 usage, platform settings), `staff`, `settings`, `layout` (halls, tables, seats),
@@ -125,7 +128,8 @@ browser). Razorpay is called with Node's built-in `fetch` (no SDK). Tests: `node
 
 ## 3. Runtime & deploy shape
 
-- One Node process (cPanel Passenger) serves: `/api/*`, `/admin/*` (admin build),
+- One Node process (cPanel Passenger) serves: `/api/*`, `/admin/*` (admin build,
+  installable PWA — `/admin/sw.js`, `/admin/manifest.webmanifest`, `/admin/icon-*.png`),
   `/s/:slug/*` (student build, manifest injected per library), `/files/*` (public
   images), `/sw.js`, `/.well-known/assetlinks.json`.
 - MySQL 5.7+ / MariaDB 10.4+ (what cPanel hosts ship). We do **not** rely on `CHECK`

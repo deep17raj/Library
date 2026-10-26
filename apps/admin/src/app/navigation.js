@@ -116,6 +116,39 @@ export const NAV_GROUPS = [
   },
 ];
 
+/**
+ * The phone bottom tab bar (installed-app feel): the five things done most, in order.
+ * The hamburger drawer still reaches everything else. Tabs the user can't use are
+ * dropped (the API enforces the same rules).
+ */
+export const BOTTOM_NAV = [
+  { to: "/dashboard", label: "Home", icon: ICONS.home, visible: inLibrary },
+  { to: "/members", label: "Members", icon: ICONS.members, visible: inLibrary },
+  {
+    to: "/attendance",
+    label: "Attendance",
+    icon: ICONS.attendance,
+    visible: inLibraryWith(PERMISSIONS.ATTENDANCE_MANAGE),
+  },
+  {
+    to: "/payments",
+    label: "Payments",
+    icon: ICONS.payment,
+    visible: inLibraryWith(PERMISSIONS.PAYMENTS_COLLECT),
+  },
+  {
+    to: "/settings",
+    label: "Settings",
+    icon: ICONS.settings,
+    visible: inLibraryWith(PERMISSIONS.SETTINGS_MANAGE),
+  },
+];
+
+/** The bottom-bar tabs this user can see (empty for the super admin, who has no library). */
+export function visibleBottomNav(user) {
+  return BOTTOM_NAV.filter((item) => item.visible(user));
+}
+
 /** The groups (and items) this user can see; empty groups are dropped. */
 export function visibleNav(user) {
   return NAV_GROUPS.map((group) => ({

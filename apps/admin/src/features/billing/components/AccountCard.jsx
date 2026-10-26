@@ -6,8 +6,9 @@ import { displayDate } from "@app/shared/time";
 import { Alert, Badge, Button, IconButton, SectionCard, Skeleton } from "@app/shared/ui";
 import { ICONS } from "@app/shared/icons";
 import { useCan } from "../../../app/permissions.js";
+import { useLibrarySettings } from "../../settings/api.js";
 import { useAccount, useVoidInvoice, useVoidPayment } from "../api.js";
-import { invoiceStatus } from "@app/shared/billing";
+import { invoiceStatus, paymentReminderMessage } from "@app/shared/billing";
 import { CollectPaymentDialog } from "./CollectPaymentDialog.jsx";
 import { ChargeDialog, DiscountDialog, RefundDialog, VoidDialog } from "./MoneyDialogs.jsx";
 import { AccountSummary } from "./AccountSummary.jsx";
@@ -15,6 +16,7 @@ import { AccountSummary } from "./AccountSummary.jsx";
 /** The member's money on their page: summary, charges, receipts (UI-GUIDE §10 Member page). */
 export function AccountCard({ member, today, autoCollect = false }) {
   const { data: account, isLoading, error } = useAccount(member.id);
+  const { data: settings } = useLibrarySettings();
   const canCollect = useCan(PERMISSIONS.PAYMENTS_COLLECT);
   const canVoid = useCan(PERMISSIONS.PAYMENTS_VOID);
   // Arriving from Dues → "Collect" opens the payment dialog straight away.
@@ -28,15 +30,23 @@ export function AccountCard({ member, today, autoCollect = false }) {
       title="Fees & payments"
       description="What this student owes and has paid."
       actions={
-        canCollect &&
         account && (
           <>
-            <Button variant="secondary" size="sm" icon={ICONS.charge} onClick={open("charge")}>
-              Add charge
-            </Button>
-            <Button size="sm" icon={ICONS.payment} onClick={open("collect")}>
-              Collect payment
-            </Button>
+            <WhatsappReminderButton
+              member={member}
+              account={account}
+              libraryName={settings?.displayName}
+            />
+            {canCollect && (
+              <>
+                <Button variant="secondary" size="sm" icon={ICONS.charge} onClick={open("charge")}>
+                  Add charge
+                </Button>
+                <Button size="sm" icon={ICONS.payment} onClick={open("collect")}>
+                  Collect payment
+                </Button>
+              </>
+            )}
           </>
         )
       }
@@ -61,6 +71,31 @@ export function AccountCard({ member, today, autoCollect = false }) {
       )}
       <AccountDialogs dialog={dialog} member={member} account={account} close={close} />
     </SectionCard>
+  );
+}
+
+/**
+ * Nudge the student on WhatsApp about unpaid fees. Clickable only when something
+ * is owed (and the phone is reachable); otherwise it stays disabled.
+ */
+function WhatsappReminderButton({ member, account, libraryName }) {
+  const reminder = paymentReminderMessage({
+    phone: member.phone,
+    memberName: member.name,
+    libraryName,
+    summary: account.summary,
+  });
+  return (
+    <Button
+      variant="secondary"
+      size="sm"
+      icon={ICONS.whatsapp}
+      disabled={!reminder}
+      title={reminder ? "Send a fee reminder on WhatsApp" : "Nothing is owed right now"}
+      onClick={reminder ? () => window.open(reminder.url, "_blank", "noopener") : undefined}
+    >
+      WhatsApp reminder
+    </Button>
   );
 }
 

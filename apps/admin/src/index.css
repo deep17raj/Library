@@ -11,6 +11,15 @@
 
 body {
   @apply bg-slate-50 font-sans text-slate-900 antialiased;
+  -webkit-text-size-adjust: 100%;
+}
+
+/* Installed to the home screen: feel like an app, not a scrolled web page. */
+@media (display-mode: standalone) {
+  body {
+    overscroll-behavior-y: none;
+    -webkit-tap-highlight-color: transparent;
+  }
 }
 
 @media (prefers-reduced-motion: reduce) {

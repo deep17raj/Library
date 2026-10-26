@@ -15,9 +15,11 @@ import {
   StatCard,
   useToast,
 } from "@app/shared/ui";
+import { paymentReminderMessage } from "@app/shared/billing";
 import { downloadFile } from "../../app/download.js";
 import { ICONS } from "@app/shared/icons";
 import { useCan } from "../../app/permissions.js";
+import { useLibrarySettings } from "../settings/api.js";
 import { useDues } from "./api.js";
 
 const BUCKETS = [
@@ -30,6 +32,7 @@ const BUCKETS = [
 /** Who owes money now, oldest debt first (UI-GUIDE §11 Dues). */
 export function DuesPage() {
   const { data, isLoading, error } = useDues();
+  const { data: settings } = useLibrarySettings();
   const [bucket, setBucket] = useState("all");
   const canCollect = useCan(PERMISSIONS.PAYMENTS_COLLECT);
   const toast = useToast();
@@ -89,7 +92,12 @@ export function DuesPage() {
             <Card className="p-0">
               <ul className="divide-y divide-slate-100">
                 {members.map((member) => (
-                  <DueRow key={member.memberId} member={member} canCollect={canCollect} />
+                  <DueRow
+                    key={member.memberId}
+                    member={member}
+                    canCollect={canCollect}
+                    libraryName={settings?.displayName}
+                  />
                 ))}
               </ul>
             </Card>
@@ -100,9 +108,15 @@ export function DuesPage() {
   );
 }
 
-function DueRow({ member, canCollect }) {
+function DueRow({ member, canCollect, libraryName }) {
   const navigate = useNavigate();
   const late = member.daysOverdue === 0 ? "Due today" : `${member.daysOverdue} days late`;
+  const reminder = paymentReminderMessage({
+    phone: member.phone,
+    memberName: member.name,
+    libraryName,
+    summary: member,
+  });
   return (
     <li className="flex flex-wrap items-center gap-3 px-4 py-3">
       <div className="min-w-0 flex-1">
@@ -122,6 +136,16 @@ function DueRow({ member, canCollect }) {
       <span className="w-24 text-right font-semibold tabular-nums text-red-700">
         {formatRupees(member.outstandingPaise)}
       </span>
+      <Button
+        variant="secondary"
+        size="sm"
+        icon={ICONS.whatsapp}
+        disabled={!reminder}
+        title={reminder ? "Send a fee reminder on WhatsApp" : "No reachable mobile number"}
+        onClick={reminder ? () => window.open(reminder.url, "_blank", "noopener") : undefined}
+      >
+        Remind
+      </Button>
       {canCollect && (
         <Button
           size="sm"

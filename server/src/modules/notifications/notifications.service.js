@@ -42,11 +42,11 @@ async function announce(deps, ctx, input) {
   if (memberIds.length > 0) {
     await deps.repo.insertRecipients(deps.db, ctx.tenantId, id, memberIds);
   }
-  const { sent, failed } = await deps.push.sendToMembers(ctx.tenantId, memberIds, {
-    title,
-    body,
-    url: url || "",
-  });
+  const { sent, failed } = await deps.push.sendToMembers(
+    ctx.tenantId,
+    memberIds,
+    pushPayload({ kind: "announcement", title, body, url }),
+  );
   await deps.repo.updatePushCounts(deps.db, ctx.tenantId, id, sent, failed);
   return { id, recipientsCount: memberIds.length, pushSent: sent, pushFailed: failed };
 }
@@ -97,11 +97,22 @@ async function sendSystemNotification(deps, tenantId, input) {
     recipientsCount: memberIds.length,
   });
   await deps.repo.insertRecipients(deps.db, tenantId, id, memberIds);
-  const { sent, failed } = await deps.push.sendToMembers(tenantId, memberIds, {
-    title,
-    body,
-    url: url || "",
-  });
+  const { sent, failed } = await deps.push.sendToMembers(
+    tenantId,
+    memberIds,
+    pushPayload({ kind, title, body, url }),
+  );
   await deps.repo.updatePushCounts(deps.db, tenantId, id, sent, failed);
   return { id, recipientsCount: memberIds.length, pushSent: sent, pushFailed: failed };
+}
+
+/** Money and seat matters are urgent (stay on screen, stronger buzz); notices are not. */
+const URGENT_KINDS = new Set(["fee_due", "seat_expiry"]);
+
+/**
+ * The payload the service worker renders. `tag` collapses repeat reminders of the same
+ * kind into one on the phone; `important` turns on `requireInteraction` + a stronger buzz.
+ */
+function pushPayload({ kind, title, body, url }) {
+  return { title, body, url: url || "", tag: kind, important: URGENT_KINDS.has(kind) };
 }

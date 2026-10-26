@@ -1,12 +1,14 @@
 import { useEffect, useState } from "react";
 import { Link, Navigate, NavLink, Outlet, useLocation, useNavigate } from "react-router-dom";
 import { Menu, X } from "lucide-react";
-import { ROLE_LABELS } from "@app/shared/constants";
+import { hasPermission, PERMISSIONS, ROLE_LABELS } from "@app/shared/constants";
 import { IconButton, PageTitleContext, Spinner, cx } from "@app/shared/ui";
 import { useLogout } from "../features/auth/api.js";
 import { useLibrarySettings } from "../features/settings/api.js";
 import { ICONS } from "@app/shared/icons";
+import { BottomNav } from "./BottomNav.jsx";
 import { visibleNav } from "./navigation.js";
+import { useInstallPrompt } from "./pwa.js";
 import { useSession } from "./session.js";
 import { useBranding } from "./useBranding.js";
 
@@ -32,9 +34,10 @@ export function Shell() {
 
   return (
     <div className="min-h-screen md:flex">
-      <header className="no-print sticky top-0 z-20 flex items-center justify-between border-b border-slate-200 bg-white/90 px-4 py-2.5 backdrop-blur md:hidden">
-        <Brand title={pageTitle || title} logoUrl={settings?.logoUrl} />
+      <header className="no-print sticky top-0 z-20 flex items-center justify-between gap-2 border-b border-slate-200 bg-white/90 px-4 py-2.5 pt-[calc(0.625rem+env(safe-area-inset-top))] backdrop-blur md:hidden">
         <IconButton icon={Menu} label="Open menu" onClick={() => setDrawerOpen(true)} />
+        <Brand title={pageTitle || title} logoUrl={settings?.logoUrl} className="flex-1" />
+        <QuickAddMember user={user} />
       </header>
       {drawerOpen && (
         <button
@@ -62,20 +65,36 @@ export function Shell() {
         <SidebarNav user={user} />
         <UserCard user={user} />
       </aside>
-      <main className="min-w-0 flex-1 px-4 py-6 md:px-8 md:py-8">
+      <main className="min-w-0 flex-1 px-4 py-6 pb-[calc(5.5rem+env(safe-area-inset-bottom))] md:px-8 md:py-8 md:pb-8">
         <div className="mx-auto max-w-6xl">
           <PageTitleContext.Provider value={setPageTitle}>
             <Outlet />
           </PageTitleContext.Provider>
         </div>
       </main>
+      <BottomNav user={user} />
     </div>
   );
 }
 
-function Brand({ title, logoUrl, subtitle }) {
+/** Quick "add member" button in the phone top bar — the app's one-tap primary action. */
+function QuickAddMember({ user }) {
+  if (!hasPermission(user, PERMISSIONS.MEMBERS_MANAGE)) return null;
   return (
-    <Link to="/" className="flex min-w-0 items-center gap-2.5">
+    <Link
+      to="/members/new"
+      aria-label="Add member"
+      title="Add member"
+      className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-brand text-white shadow-sm shadow-brand/20 hover:bg-brand-dark"
+    >
+      <ICONS.addMember className="h-5 w-5" aria-hidden="true" />
+    </Link>
+  );
+}
+
+function Brand({ title, logoUrl, subtitle, className }) {
+  return (
+    <Link to="/" className={cx("flex min-w-0 items-center gap-2.5", className)}>
       {logoUrl ? (
         <img src={logoUrl} alt="" className="h-9 w-9 shrink-0 rounded-xl object-contain" />
       ) : (
@@ -125,6 +144,7 @@ function SidebarNav({ user }) {
 function UserCard({ user }) {
   const logout = useLogout();
   const navigate = useNavigate();
+  const { canInstall, installed, install } = useInstallPrompt();
   const initials = user.name
     .split(/\s+/)
     .slice(0, 2)
@@ -143,6 +163,15 @@ function UserCard({ user }) {
           <p className="truncate text-xs text-slate-500">{user.email}</p>
         </div>
       </div>
+      {canInstall && !installed && (
+        <button
+          type="button"
+          onClick={install}
+          className="mt-1 flex w-full items-center gap-2 rounded-xl px-3 py-2 text-xs font-medium text-brand-dark hover:bg-brand-light"
+        >
+          <ICONS.installApp className="h-4 w-4" aria-hidden="true" /> Install app
+        </button>
+      )}
       <div className="mt-1 flex gap-1">
         <NavLink to="/account/password" className={link}>
           <ICONS.password className="h-4 w-4" aria-hidden="true" /> Password

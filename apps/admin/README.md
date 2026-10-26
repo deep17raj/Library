@@ -1,7 +1,10 @@
 # admin app
 
 React app for library owners, staff and the super admin. Built by Vite into `dist/`
-and served by the server at `/admin`.
+and served by the server at `/admin`. It is an installable PWA: the service worker
+`public/sw.js` (served at `/admin/sw.js`) caches assets and serves the shell offline,
+and the manifest/home-screen icons come from `server/src/static/adminShell.js`. The
+install/offline plumbing is shared with the student app in `@app/shared/pwa`.
 
 ```
 src/
@@ -17,7 +20,8 @@ src/
     QrImage.jsx          a QR code drawn in the browser (check-in desk, student app link)
     StatusBadge.jsx      active / suspended / disabled badge
     navigation.js        sidebar groups (Today, Students, Money, Setup, Platform), who sees them
-    Shell.jsx            signed-in layout: sidebar / mobile drawer; redirects to /login
+    Shell.jsx            signed-in layout: sidebar / mobile drawer; redirects to /login; "Install app"
+    pwa.js               register the service worker + useInstallPrompt (thin wrapper over @app/shared/pwa)
     useToday.js          today's date in the library's timezone
     download.js          downloadFile — CSV exports through the API client (cookies + headers)
   features/<feature>/    Page components, components/, hooks, api.js (query hooks)

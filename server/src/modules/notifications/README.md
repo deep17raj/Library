@@ -13,7 +13,11 @@ Library announcements and automated system notifications sent to students.
   waitlist-offer notices are created by background jobs via `sendSystemNotification`,
   which deduplicates by `dedupe_key` so reminders arrive exactly once.
 - **Push** — every notification is pushed to the recipient's subscribed browsers
-  (via the push module); 404/410 responses clean up stale subscriptions.
+  (via the push module); 404/410 responses clean up stale subscriptions. The payload
+  carries `tag` (the kind) and `important`: the service worker collapses repeat reminders
+  of one kind into a single notification, and urgent kinds (`fee_due`, `seat_expiry`) stay
+  on screen until tapped with a stronger buzz. Custom sound files aren't possible on web
+  push — the phone plays its own notification sound.
 
 ## Tables
 

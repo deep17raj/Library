@@ -17,7 +17,8 @@
     "./billing": "./src/billing/index.js",
     "./attendance": "./src/attendance/index.js",
     "./icons": "./src/icons/index.js",
-    "./forms": "./src/forms/index.js"
+    "./forms": "./src/forms/index.js",
+    "./pwa": "./src/pwa/index.js"
   },
   "scripts": {
     "test": "node --test"

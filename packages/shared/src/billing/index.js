@@ -3,3 +3,4 @@ export * from "./periods.js";
 export * from "./invoicePlan.js";
 export * from "./dues.js";
 export * from "./invoiceStatus.js";
+export * from "./paymentReminder.js";

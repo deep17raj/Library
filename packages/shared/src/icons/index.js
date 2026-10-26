@@ -38,6 +38,7 @@ import {
   LogIn,
   LogOut,
   MapPin,
+  MessageCircle,
   MoveRight,
   Pencil,
   Phone,
@@ -121,6 +122,7 @@ export const ICONS = Object.freeze({
   mockTest: ClipboardList,
   installApp: Smartphone,
   location: MapPin,
+  whatsapp: MessageCircle,
 });
 
 /** Payment-mode icons (cash, UPI, card, bank, cheque, other, online). */
